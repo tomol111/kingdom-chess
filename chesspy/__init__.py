@@ -114,3 +114,35 @@ class Board:
             board._grid[7][i] = Piece(typ, Color.WHITE)
 
         return board
+
+    @classmethod
+    def from_unicode(cls, unicode: str) -> Board:
+        board = Board()
+        unicode = "".join(unicode.split())
+
+        positions = [
+            Position(x, y)
+            for x in range(BOARD_SIDE_LEN)
+            for y in range(BOARD_SIDE_LEN)
+        ]
+        for pos, char in zip(positions, unicode, strict=True):
+            board[pos] = unicode_to_piece(char)
+
+        return board
+
+
+unicode_to_piece = {
+    "⋅": None,
+    "♔": Piece(PieceType.KING, Color.WHITE),
+    "♕": Piece(PieceType.QUEEN, Color.WHITE),
+    "♖": Piece(PieceType.ROOK, Color.WHITE),
+    "♗": Piece(PieceType.BISHOP, Color.WHITE),
+    "♘": Piece(PieceType.KNIGHT, Color.WHITE),
+    "♙": Piece(PieceType.PAWN, Color.WHITE),
+    "♚": Piece(PieceType.KING, Color.BLACK),
+    "♛": Piece(PieceType.QUEEN, Color.BLACK),
+    "♜": Piece(PieceType.ROOK, Color.BLACK),
+    "♝": Piece(PieceType.BISHOP, Color.BLACK),
+    "♞": Piece(PieceType.KNIGHT, Color.BLACK),
+    "♟": Piece(PieceType.PAWN, Color.BLACK),
+}.__getitem__
