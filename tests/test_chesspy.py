@@ -1,3 +1,5 @@
+import textwrap
+
 import pytest
 
 from chesspy import (
@@ -261,3 +263,31 @@ def test_board_should_be_created_from_unicode():
     assert board[Position(7, 5)] is None
     assert board[Position(7, 6)] is None
     assert board[Position(7, 7)] is None
+
+
+def test_board_should_be_represented_with_unicode():
+    board = Board()
+
+    board[Position(0, 1)] = Piece(PieceType.PAWN, Color.BLACK)
+    board[Position(0, 6)] = Piece(PieceType.QUEEN, Color.WHITE)
+    board[Position(1, 1)] = Piece(PieceType.ROOK, Color.BLACK)
+    board[Position(1, 3)] = Piece(PieceType.BISHOP, Color.BLACK)
+    board[Position(2, 1)] = Piece(PieceType.KING, Color.BLACK)
+    board[Position(2, 2)] = Piece(PieceType.BISHOP, Color.WHITE)
+    board[Position(2, 7)] = Piece(PieceType.KNIGHT, Color.WHITE)
+    board[Position(3, 0)] = Piece(PieceType.PAWN, Color.WHITE)
+    board[Position(4, 5)] = Piece(PieceType.ROOK, Color.WHITE)
+    board[Position(5, 1)] = Piece(PieceType.QUEEN, Color.BLACK)
+    board[Position(5, 6)] = Piece(PieceType.KNIGHT, Color.BLACK)
+    board[Position(7, 1)] = Piece(PieceType.KING, Color.WHITE)
+
+    assert str(board) == textwrap.dedent("""\
+        ⋅ ⋅ ⋅ ♙ ⋅ ⋅ ⋅ ⋅
+        ♟ ♜ ♚ ⋅ ⋅ ♛ ⋅ ♔
+        ⋅ ⋅ ♗ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ♝ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ♖ ⋅ ⋅ ⋅
+        ♕ ⋅ ⋅ ⋅ ⋅ ♞ ⋅ ⋅
+        ⋅ ⋅ ♘ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)

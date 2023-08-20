@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import enum
 import dataclasses
-from typing import Final
+from typing import Final, Mapping
 
 
 # Layout
@@ -31,7 +31,7 @@ class Position:
 # ======
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Piece:
     typ: PieceType
     color: Color
@@ -126,12 +126,18 @@ class Board:
             for y in range(BOARD_SIDE_LEN)
         ]
         for pos, char in zip(positions, unicode, strict=True):
-            board[pos] = unicode_to_piece(char)
+            board[pos] = unicode_to_piece[char]
 
         return board
 
+    def __str__(self) -> str:
+        return "\n".join(
+            " ".join(piece_to_unicode[self._grid[y][x]] for x in range(BOARD_SIDE_LEN))
+            for y in range(BOARD_SIDE_LEN)
+        ) + "\n"
 
-unicode_to_piece = {
+
+unicode_to_piece: Final[Mapping[str, Piece | None]] = {
     "⋅": None,
     "♔": Piece(PieceType.KING, Color.WHITE),
     "♕": Piece(PieceType.QUEEN, Color.WHITE),
@@ -145,4 +151,8 @@ unicode_to_piece = {
     "♝": Piece(PieceType.BISHOP, Color.BLACK),
     "♞": Piece(PieceType.KNIGHT, Color.BLACK),
     "♟": Piece(PieceType.PAWN, Color.BLACK),
-}.__getitem__
+}
+
+piece_to_unicode: Final[Mapping[Piece | None, str]] = {
+    piece: unicode for unicode, piece in unicode_to_piece.items()
+}
