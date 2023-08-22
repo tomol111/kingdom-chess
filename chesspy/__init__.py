@@ -122,8 +122,8 @@ class Board:
 
         positions = [
             Position(x, y)
-            for x in range(BOARD_SIDE_LEN)
             for y in range(BOARD_SIDE_LEN)
+            for x in range(BOARD_SIDE_LEN)
         ]
         for pos, char in zip(positions, unicode, strict=True):
             board[pos] = unicode_to_piece[char]
