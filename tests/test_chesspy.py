@@ -291,3 +291,55 @@ def test_board_should_be_represented_with_unicode():
         ♕ ⋅ ⋅ ⋅ ⋅ ♞ ⋅ ⋅
         ⋅ ⋅ ♘ ⋅ ⋅ ⋅ ⋅ ⋅
     """)
+
+
+def test_board_should_check_for_equality():
+    board1 = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ♙ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ♚ ⋅ ⋅ ♛ ⋅ ♔
+        ⋅ ⋅ ♗ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ♝ ⋅ ⋅
+        ⋅ ⋅ ⋅ ♟ ⋅ ⋅ ⋅ ⋅
+        ⋅ ♜ ⋅ ⋅ ♖ ⋅ ⋅ ⋅
+        ♕ ⋅ ⋅ ⋅ ⋅ ♞ ⋅ ⋅
+        ⋅ ⋅ ♘ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+
+    board2 = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ♙ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ♚ ⋅ ⋅ ♛ ⋅ ♔
+        ⋅ ⋅ ♗ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ♝ ⋅ ⋅
+        ⋅ ⋅ ⋅ ♟ ⋅ ⋅ ⋅ ⋅
+        ⋅ ♜ ⋅ ⋅ ♖ ⋅ ⋅ ⋅
+        ♕ ⋅ ⋅ ⋅ ⋅ ♞ ⋅ ⋅
+        ⋅ ⋅ ♘ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+
+    assert board1 == board2
+
+
+def test_board_should_check_no_equality():
+    board1 = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ♙ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ♚ ⋅ ⋅ ♛ ⋅ ♔
+        ⋅ ⋅ ♗ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ♝ ⋅ ⋅
+        ⋅ ⋅ ⋅ ♟ ⋅ ⋅ ⋅ ⋅
+        ⋅ ♜ ⋅ ⋅ ♖ ⋅ ⋅ ⋅
+        ♕ ⋅ ⋅ ⋅ ⋅ ♞ ⋅ ⋅
+        ⋅ ⋅ ♘ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+
+    board2 = Board.from_unicode("""
+        ⋅ ⋅ ♗ ⋅ ⋅ ⋅ ⋅ ⋅
+        ♕ ⋅ ⋅ ⋅ ⋅ ♞ ⋅ ⋅
+        ⋅ ⋅ ♚ ⋅ ⋅ ♛ ⋅ ♔
+        ⋅ ⋅ ⋅ ♟ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ♝ ⋅ ⋅
+        ⋅ ⋅ ♘ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ♜ ⋅ ⋅ ♖ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ♙ ⋅ ⋅ ⋅ ⋅
+    """)
+
+    assert board1 != board2

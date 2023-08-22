@@ -136,6 +136,15 @@ class Board:
             for y in range(BOARD_SIDE_LEN)
         ) + "\n"
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Board):
+            return NotImplemented
+        return all(
+            self._grid[y][x] == other._grid[y][x]
+            for x in range(BOARD_SIDE_LEN)
+            for y in range(BOARD_SIDE_LEN)
+        )
+
 
 unicode_to_piece: Final[Mapping[str, Piece | None]] = {
     "⋅": None,
