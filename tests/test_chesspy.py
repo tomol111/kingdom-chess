@@ -5,6 +5,8 @@ import pytest
 from chesspy import (
     Board,
     Color,
+    make_move,
+    MoveException,
     Piece,
     PieceType,
     Position,
@@ -343,3 +345,365 @@ def test_board_should_check_no_equality():
     """)
 
     assert board1 != board2
+
+
+def test_should_fail_to_move_in_place():
+    board = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ♔ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    with pytest.raises(MoveException):
+        make_move(board, Position(2, 2), Position(2, 2))
+
+
+def test_should_move_king():
+    board = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ♔ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+
+    result1 = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ♔ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    make_move(board, Position(4, 4), Position(3, 4))
+    assert board == result1
+
+    result2 = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ♔ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    make_move(board, Position(3, 4), Position(2, 3))
+    assert board == result2
+
+
+def test_should_not_move_king_incorrectly():
+    board = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ♔ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    with pytest.raises(MoveException):
+        make_move(board, Position(4, 4), Position(2, 4))
+
+
+def test_should_move_rook():
+    board = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ♜ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+
+    result1 = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ♜ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    make_move(board, Position(5, 1), Position(5, 5))
+    assert board == result1
+
+    result2 = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ♜ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    make_move(board, Position(5, 5), Position(3, 5))
+    assert board == result2
+
+
+def test_should_not_move_rook_incorrectly():
+    board = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ♜ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    with pytest.raises(MoveException):
+        make_move(board, Position(5, 1), Position(3, 2))
+
+
+def test_should_move_bishop():
+    board = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ♗ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+
+    result1 = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ♗ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    make_move(board, Position(2, 6), Position(5, 3))
+    assert board == result1
+
+
+def test_should_not_move_bishop_incorrectly():
+    board = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ♗ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    with pytest.raises(MoveException):
+        make_move(board, Position(2, 6), Position(3, 4))
+
+
+def test_should_move_knight():
+    board = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ♘ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+
+    result1 = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ♘ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    make_move(board, Position(4, 4), Position(2, 3))
+    assert board == result1
+
+    result2 = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ♘ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    make_move(board, Position(2, 3), Position(3, 1))
+    assert board == result2
+
+
+def test_should_not_move_knight_incorrectly():
+    board = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ♘ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    with pytest.raises(MoveException):
+        make_move(board, Position(3, 1), Position(4, 2))
+
+
+def test_should_move_queen():
+    board = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ♛ ⋅ ⋅
+    """)
+
+    result1 = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ♛ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    make_move(board, Position(5, 7), Position(5, 3))
+    assert board == result1
+
+    result2 = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ♛ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    make_move(board, Position(5, 3), Position(3, 5))
+    assert board == result2
+
+
+def test_should_not_move_queen_incorrectly():
+    board = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ♛ ⋅ ⋅
+    """)
+    with pytest.raises(MoveException):
+        make_move(board, Position(5, 7), Position(4, 5))
+
+
+def test_should_move_pawn():
+    board = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ♙ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    result = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ♙ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    make_move(board, Position(3, 5), Position(3, 4))
+    assert board == result
+
+    board = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ♟ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    result = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ♟ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    make_move(board, Position(5, 2), Position(5, 3))
+    assert board == result
+
+
+def test_should_not_move_pawn_incorrectly():
+    board = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ♟ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    with pytest.raises(MoveException):
+        make_move(board, Position(5, 2), Position(4, 3))
+
+    board = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ♙ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    with pytest.raises(MoveException):
+        make_move(board, Position(5, 4), Position(5, 5))
+
+def test_should_fail_to_move_from_empty_departure():
+    board = Board.from_unicode("""
+        ⋅ ♛ ⋅ ⋅ ⋅ ⋅ ♖ ⋅
+        ⋅ ⋅ ⋅ ♕ ⋅ ⋅ ⋅ ⋅
+        ⋅ ♞ ⋅ ⋅ ⋅ ♙ ⋅ ⋅
+        ⋅ ⋅ ♟ ⋅ ♗ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ♘ ⋅
+        ⋅ ♜ ⋅ ⋅ ⋅ ♔ ⋅ ⋅
+        ⋅ ⋅ ♝ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ♚ ⋅ ⋅ ⋅
+    """)
+    with pytest.raises(MoveException):
+        make_move(board, Position(3, 0), Position(4, 1))

@@ -27,6 +27,10 @@ class Position:
         if y_invalid:
             raise ValueError(f"invalid y value of {self!r}")
 
+    def offset_from(self, other: Position) -> tuple[int, int]:
+        return (self.x - other.x, self.y - other.y)
+
+
 # Pieces
 # ======
 
@@ -165,3 +169,43 @@ unicode_to_piece: Final[Mapping[str, Piece | None]] = {
 piece_to_unicode: Final[Mapping[Piece | None, str]] = {
     piece: unicode for unicode, piece in unicode_to_piece.items()
 }
+
+
+# Move
+# ====
+
+
+class MoveException(Exception):
+    pass
+
+
+def make_move(board: Board, departure: Position, destination: Position) -> None:
+    if departure == destination:
+        raise MoveException("destination is the same as departure")
+
+    moving_piece = board[departure]
+    dx, dy = destination.offset_from(departure)
+    match moving_piece:
+        case Piece(typ=PieceType.KING):
+            if abs(dx) > 1 or abs(dy) > 1:
+                raise MoveException("invalid king move")
+        case Piece(typ=PieceType.ROOK):
+            if dx != 0 and dy != 0:
+                raise MoveException("invalid rook move")
+        case Piece(typ=PieceType.BISHOP):
+            if abs(dx) != abs(dy):
+                raise MoveException("invalid bishop move")
+        case Piece(typ=PieceType.KNIGHT):
+            if (abs(dx), abs(dy)) not in [(1, 2), (2, 1)]:
+                raise MoveException("invalid knight move")
+        case Piece(typ=PieceType.QUEEN):
+            if abs(dx) != abs(dy) and dx != 0 and dy != 0:
+                raise MoveException("invalid queen move")
+        case Piece(typ=PieceType.PAWN, color=color):
+            if dx != 0 or dy != (1 if color is Color.BLACK else -1):
+                raise MoveException("invalid pawn move")
+        case None:
+            raise MoveException("departure have no piece")
+
+    board[departure] = None
+    board[destination] = moving_piece
