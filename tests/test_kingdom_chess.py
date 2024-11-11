@@ -2,7 +2,7 @@ import textwrap
 
 import pytest
 
-from chesspy import (
+from kingdom_chess import (
     Board,
     Color,
     make_move,
