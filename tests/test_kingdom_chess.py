@@ -387,6 +387,21 @@ def test_should_fail_to_move_in_place():
         make_move(board, Position(2, 2), Position(2, 2))
 
 
+def test_should_fail_to_move_from_empty_departure():
+    board = Board.from_unicode("""
+        ⋅ ♛ ⋅ ⋅ ⋅ ⋅ ♖ ⋅
+        ⋅ ⋅ ⋅ ♕ ⋅ ⋅ ⋅ ⋅
+        ⋅ ♞ ⋅ ⋅ ⋅ ♙ ⋅ ⋅
+        ⋅ ⋅ ♟ ⋅ ♗ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ♘ ⋅
+        ⋅ ♜ ⋅ ⋅ ⋅ ♔ ⋅ ⋅
+        ⋅ ⋅ ♝ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ♚ ⋅ ⋅ ⋅
+    """)
+    with pytest.raises(MoveException):
+        make_move(board, Position(3, 0), Position(4, 1))
+
+
 def test_should_move_king():
     board = Board.from_unicode("""
         ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
@@ -720,19 +735,10 @@ def test_should_not_move_pawn_incorrectly():
         make_move(board, Position(5, 4), Position(5, 5))
 
 
-def test_should_fail_to_move_from_empty_departure():
-    board = Board.from_unicode("""
-        ⋅ ♛ ⋅ ⋅ ⋅ ⋅ ♖ ⋅
-        ⋅ ⋅ ⋅ ♕ ⋅ ⋅ ⋅ ⋅
-        ⋅ ♞ ⋅ ⋅ ⋅ ♙ ⋅ ⋅
-        ⋅ ⋅ ♟ ⋅ ♗ ⋅ ⋅ ⋅
-        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ♘ ⋅
-        ⋅ ♜ ⋅ ⋅ ⋅ ♔ ⋅ ⋅
-        ⋅ ⋅ ♝ ⋅ ⋅ ⋅ ⋅ ⋅
-        ⋅ ⋅ ⋅ ⋅ ♚ ⋅ ⋅ ⋅
-    """)
-    with pytest.raises(MoveException):
-        make_move(board, Position(3, 0), Position(4, 1))
+def test_should_allow_pawn_to_make_long_move_on_first_move():
+    board = Board()
+    board[Position(7, 1)] = Piece(PieceType.PAWN, Color.BLACK)
+    make_move(board, Position(7, 1), Position(7, 3))
 
 
 @pytest.mark.parametrize(("departure, obstacle, destination"), [
