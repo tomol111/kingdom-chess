@@ -193,6 +193,7 @@ def test_board_should_be_convertable_to_mapping():
         Position(3, 4): Piece(PieceType.QUEEN, Color.BLACK),
     }
 
+
 def test_board_should_be_created_from_mapping():
     state = {
         Position(0, 3): Piece(PieceType.KNIGHT, Color.WHITE),
@@ -204,7 +205,6 @@ def test_board_should_be_created_from_mapping():
     assert board[Position(0, 3)] == Piece(PieceType.KNIGHT, Color.WHITE)
     assert board[Position(2, 4)] == Piece(PieceType.QUEEN, Color.BLACK)
     assert board[Position(3, 6)] is None
-
 
 
 def test_board_should_be_created_from_unicode():
@@ -719,6 +719,7 @@ def test_should_not_move_pawn_incorrectly():
     with pytest.raises(MoveException):
         make_move(board, Position(5, 4), Position(5, 5))
 
+
 def test_should_fail_to_move_from_empty_departure():
     board = Board.from_unicode("""
         ⋅ ♛ ⋅ ⋅ ⋅ ⋅ ♖ ⋅
@@ -732,3 +733,68 @@ def test_should_fail_to_move_from_empty_departure():
     """)
     with pytest.raises(MoveException):
         make_move(board, Position(3, 0), Position(4, 1))
+
+
+@pytest.mark.parametrize(("departure, obstacle, destination"), [
+    (Position(2, 5), Position(2, 6), Position(2, 7)),
+    (Position(3, 5), Position(3, 3), Position(3, 2)),
+    (Position(1, 4), Position(3, 4), Position(5, 4)),
+    (Position(7, 0), Position(3, 0), Position(0, 0)),
+])
+def test_should_move_rook_without_leaping_over_pieces(departure, obstacle, destination):
+    board = Board()
+    board[departure] = Piece(PieceType.ROOK, Color.BLACK)
+    board[obstacle] = Piece(PieceType.PAWN, Color.BLACK)
+
+    with pytest.raises(MoveException):
+        make_move(board, departure, destination)
+
+
+@pytest.mark.parametrize(("departure, obstacle, destination"), [
+    (Position(3, 3), Position(4, 4), Position(5, 5)),
+    (Position(2, 7), Position(4, 5), Position(5, 4)),
+    (Position(6, 1), Position(4, 3), Position(2, 5)),
+    (Position(7, 7), Position(3, 3), Position(0, 0)),
+])
+def test_should_move_bishop_without_leaping_over_pieces(departure, obstacle, destination):
+    board = Board()
+    board[departure] = Piece(PieceType.BISHOP, Color.BLACK)
+    board[obstacle] = Piece(PieceType.PAWN, Color.BLACK)
+
+    with pytest.raises(MoveException):
+        make_move(board, departure, destination)
+
+
+@pytest.mark.parametrize(("departure, obstacle, destination"), [
+    (Position(2, 5), Position(2, 6), Position(2, 7)),
+    (Position(3, 5), Position(3, 3), Position(3, 2)),
+    (Position(1, 4), Position(3, 4), Position(5, 4)),
+    (Position(7, 0), Position(3, 0), Position(0, 0)),
+    (Position(3, 3), Position(4, 4), Position(5, 5)),
+    (Position(2, 7), Position(4, 5), Position(5, 4)),
+    (Position(6, 1), Position(4, 3), Position(2, 5)),
+    (Position(7, 7), Position(3, 3), Position(0, 0)),
+])
+def test_should_move_queen_without_leaping_over_pieces(departure, obstacle, destination):
+    board = Board()
+    board[departure] = Piece(PieceType.QUEEN, Color.WHITE)
+    board[obstacle] = Piece(PieceType.PAWN, Color.WHITE)
+
+    with pytest.raises(MoveException):
+        make_move(board, departure, destination)
+
+
+def test_should_move_pawn_without_leaping_over_pieces():
+    board = Board()
+    board[Position(2, 6)] = Piece(PieceType.PAWN, Color.WHITE)
+    board[Position(2, 5)] = Piece(PieceType.PAWN, Color.WHITE)
+
+    with pytest.raises(MoveException):
+        make_move(board, Position(2, 6), Position(2, 4))
+
+    board = Board()
+    board[Position(4, 1)] = Piece(PieceType.PAWN, Color.BLACK)
+    board[Position(4, 2)] = Piece(PieceType.PAWN, Color.WHITE)
+
+    with pytest.raises(MoveException):
+        make_move(board, Position(4, 1), Position(4, 3))

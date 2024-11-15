@@ -31,8 +31,29 @@ class Position:
     def offset_from(self, other: Position) -> tuple[int, int]:
         return (self.x - other.x, self.y - other.y)
 
+    def direction_to(self, destination: Position) -> tuple[int, int]:
+        """Returns direction of move, if move is horizontal, vertical or diagonal."""
+        assert (
+            (dx := destination.x - self.x) != 0
+            or (dy := destination.y - self.y) != 0
+            or abs(dx) == abs(dy)
+        )
+
+        return _compare(self.x, destination.x), _compare(self.y, destination.y)
+
+    def shift(self, dx: int, dy: int) -> Position:
+        return Position(self.x + dx, self.y + dy)
+
     def __hash__(self) -> int:
         return hash((self.x, self.y))
+
+
+def _compare(x: int, y: int) -> int:
+    if x == y:
+        return 0
+    if x < y:
+        return 1
+    return -1
 
 
 # Pieces
@@ -82,7 +103,6 @@ class Board:
         y v                   .------->
                                    file
     """
-
 
     def __init__(self) -> None:
         # grid[y/rank][x/file]
@@ -213,15 +233,21 @@ def make_move(board: Board, departure: Position, destination: Position) -> None:
         case Piece(typ=PieceType.ROOK):
             if dx != 0 and dy != 0:
                 raise MoveException("invalid rook move")
+            if not is_path_clear(board, departure, destination):
+                raise MoveException("rook can't leap over intervening pieces")
         case Piece(typ=PieceType.BISHOP):
             if abs(dx) != abs(dy):
                 raise MoveException("invalid bishop move")
+            if not is_path_clear(board, departure, destination):
+                raise MoveException("bichop can't leap over intervening pieces")
         case Piece(typ=PieceType.KNIGHT):
             if (abs(dx), abs(dy)) not in [(1, 2), (2, 1)]:
                 raise MoveException("invalid knight move")
         case Piece(typ=PieceType.QUEEN):
             if abs(dx) != abs(dy) and dx != 0 and dy != 0:
                 raise MoveException("invalid queen move")
+            if not is_path_clear(board, departure, destination):
+                raise MoveException("queen can't leap over intervening pieces")
         case Piece(typ=PieceType.PAWN, color=color):
             if dx != 0 or dy != (1 if color is Color.BLACK else -1):
                 raise MoveException("invalid pawn move")
@@ -230,3 +256,14 @@ def make_move(board: Board, departure: Position, destination: Position) -> None:
 
     board[departure] = None
     board[destination] = moving_piece
+
+
+def is_path_clear(board: Board, departure: Position, destination: Position) -> bool:
+    """Checks if path between positions have intervening peace(s)."""
+    dx, dy = departure.direction_to(destination)
+    intermediate = departure.shift(dx, dy)
+    while intermediate != destination:
+        if board[intermediate] is not None:
+            return False
+        intermediate = intermediate.shift(dx, dy)
+    return True
