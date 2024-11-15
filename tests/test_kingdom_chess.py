@@ -182,6 +182,31 @@ def test_board_should_be_initialy_filled():
     assert board[Position(7, 7)] == Piece(PieceType.ROOK, Color.WHITE)
 
 
+def test_board_should_be_convertable_to_mapping():
+    board = Board()
+
+    board[Position(2, 1)] = Piece(PieceType.KNIGHT, Color.WHITE)
+    board[Position(3, 4)] = Piece(PieceType.QUEEN, Color.BLACK)
+
+    assert board.to_mapping() == {
+        Position(2, 1): Piece(PieceType.KNIGHT, Color.WHITE),
+        Position(3, 4): Piece(PieceType.QUEEN, Color.BLACK),
+    }
+
+def test_board_should_be_created_from_mapping():
+    state = {
+        Position(0, 3): Piece(PieceType.KNIGHT, Color.WHITE),
+        Position(2, 4): Piece(PieceType.QUEEN, Color.BLACK),
+    }
+
+    board = Board.from_mapping(state)
+
+    assert board[Position(0, 3)] == Piece(PieceType.KNIGHT, Color.WHITE)
+    assert board[Position(2, 4)] == Piece(PieceType.QUEEN, Color.BLACK)
+    assert board[Position(3, 6)] is None
+
+
+
 def test_board_should_be_created_from_unicode():
     board = Board.from_unicode("""
         ⋅ ♛ ⋅ ⋅ ⋅ ⋅ ♖ ⋅

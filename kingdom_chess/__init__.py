@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import enum
 import dataclasses
-from typing import Final, Mapping
+from typing import Final
+from collections.abc import Mapping
 
 
 # Layout
@@ -12,7 +13,7 @@ from typing import Final, Mapping
 BOARD_SIDE_LEN: Final = 8
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Position:
     x: int
     y: int
@@ -29,6 +30,9 @@ class Position:
 
     def offset_from(self, other: Position) -> tuple[int, int]:
         return (self.x - other.x, self.y - other.y)
+
+    def __hash__(self) -> int:
+        return hash((self.x, self.y))
 
 
 # Pieces
@@ -79,7 +83,9 @@ class Board:
                                    file
     """
 
+
     def __init__(self) -> None:
+        # grid[y/row][x/file]
         self._grid: list[list[Piece | None]] = [
             [None] * BOARD_SIDE_LEN for _ in range(BOARD_SIDE_LEN)
         ]
@@ -117,6 +123,21 @@ class Board:
         for i, typ in enumerate(border_pieces_types):
             board._grid[7][i] = Piece(typ, Color.WHITE)
 
+        return board
+
+    def to_mapping(self) -> dict[Position, Piece]:
+        return {
+            Position(x, y): piece
+            for y, file in enumerate(self._grid)
+            for x, piece in enumerate(file)
+            if piece
+        }
+
+    @classmethod
+    def from_mapping(cls, mapping: Mapping[Position, Piece]) -> Board:
+        board = Board()
+        for pos, piece in mapping.items():
+            board[pos] = piece
         return board
 
     @classmethod
