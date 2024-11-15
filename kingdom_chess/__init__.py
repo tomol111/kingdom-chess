@@ -70,10 +70,10 @@ class Board:
     Layout:
 
         x = 0..7         file = a..h
-        y = 0..7          row = 1..8
+        y = 0..7         rank = 1..8
 
                   x
-          .------->       row ^
+          .------->      rank ^
           |   B               |   B
           |                   |
           |Q     K            |Q     K
@@ -85,7 +85,7 @@ class Board:
 
 
     def __init__(self) -> None:
-        # grid[y/row][x/file]
+        # grid[y/rank][x/file]
         self._grid: list[list[Piece | None]] = [
             [None] * BOARD_SIDE_LEN for _ in range(BOARD_SIDE_LEN)
         ]
