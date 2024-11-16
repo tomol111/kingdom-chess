@@ -804,3 +804,58 @@ def test_should_move_pawn_without_leaping_over_pieces():
 
     with pytest.raises(MoveException):
         make_move(board, Position(4, 1), Position(4, 3))
+
+
+def test_should_move_piece_capturing_enemy_piece():
+    board = Board()
+    board[Position(3, 6)] = Piece(PieceType.QUEEN, Color.WHITE)
+    board[Position(3, 4)] = Piece(PieceType.PAWN, Color.BLACK)
+
+    make_move(board, Position(3, 6), Position(3, 4))
+
+    assert board.to_mapping() == {Position(3, 4): Piece(PieceType.QUEEN, Color.WHITE)}
+
+
+def test_should_not_allow_to_capture_allied_piece():
+    board = Board()
+    board[Position(3, 6)] = Piece(PieceType.KING, Color.WHITE)
+    board[Position(3, 5)] = Piece(PieceType.PAWN, Color.WHITE)
+
+    with pytest.raises(MoveException):
+        make_move(board, Position(3, 6), Position(3, 5))
+
+
+def test_pawn_should_not_capture_on_forward_move():
+    board = Board()
+    board[Position(3, 5)] = Piece(PieceType.PAWN, Color.WHITE)
+    board[Position(3, 4)] = Piece(PieceType.PAWN, Color.BLACK)
+
+    with pytest.raises(MoveException):
+        make_move(board, Position(3, 6), Position(3, 5))
+
+
+def test_pawn_should_not_capture_on_long_forward_move():
+    board = Board()
+    board[Position(4, 1)] = Piece(PieceType.PAWN, Color.BLACK)
+    board[Position(4, 3)] = Piece(PieceType.PAWN, Color.WHITE)
+
+    with pytest.raises(MoveException):
+        make_move(board, Position(4, 1), Position(4, 3))
+
+
+def test_pawn_should_capture_on_diagonal_move():
+    board = Board()
+    board[Position(4, 1)] = Piece(PieceType.PAWN, Color.BLACK)
+    board[Position(5, 2)] = Piece(PieceType.BISHOP, Color.WHITE)
+
+    make_move(board, Position(4, 1), Position(5, 2))
+
+    assert board.to_mapping() == {Position(5, 2): Piece(PieceType.PAWN, Color.BLACK)}
+
+
+def test_pawn_should_not_move_diagonaly():
+    board = Board()
+    board[Position(4, 1)] = Piece(PieceType.PAWN, Color.BLACK)
+
+    with pytest.raises(MoveException):
+        make_move(board, Position(4, 1), Position(5, 2))

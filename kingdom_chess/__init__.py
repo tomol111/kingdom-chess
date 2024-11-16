@@ -225,8 +225,11 @@ def make_move(board: Board, departure: Position, destination: Position) -> None:
         raise MoveException("destination is the same as departure")
 
     moving_piece = board[departure]
+    captured_piece = board[destination]
     dx, dy = destination.offset_from(departure)
     match moving_piece:
+        case None:
+            raise MoveException("departure have no piece")
         case Piece(typ=PieceType.KING):
             if abs(dx) > 1 or abs(dy) > 1:
                 raise MoveException("invalid king move")
@@ -249,18 +252,25 @@ def make_move(board: Board, departure: Position, destination: Position) -> None:
             if not is_path_clear(board, departure, destination):
                 raise MoveException("queen can't leap over intervening pieces")
         case Piece(typ=PieceType.PAWN, color=color):
-            if dx != 0:
+            if abs(dx) == 1 and dy == (1 if color is Color.BLACK else -1):  # diagonal move
+                if not captured_piece:
+                    raise MoveException("pawn can move diagonally only when capturing")
+            elif dx == 0:  # vertical move
+                first_move = departure.y == (1 if color is Color.BLACK else 6)
+                forward_move = dy == (1 if color is Color.BLACK else -1)
+                long_forward_move = dy == (2 if color is Color.BLACK else -2)
+                valid_long_move = first_move and long_forward_move
+                if not forward_move and not valid_long_move:
+                    raise MoveException("invalid pawn move")
+                if valid_long_move and not is_path_clear(board, departure, destination):
+                    raise MoveException("pawn can't leap over intervening piece")
+                if captured_piece:
+                    raise MoveException("pawn can't capture on forward move")
+            else:
                 raise MoveException("invalid pawn move")
-            first_move = departure.y == (1 if color is Color.BLACK else 6)
-            forward_move = dy == (1 if color is Color.BLACK else -1)
-            long_forward_move = dy == (2 if color is Color.BLACK else -2)
-            valid_long_move = first_move and long_forward_move
-            if not forward_move and not valid_long_move:
-                raise MoveException("invalid pawn move")
-            if valid_long_move and not is_path_clear(board, departure, destination):
-                raise MoveException("pawn can't leap over intervening piece")
-        case None:
-            raise MoveException("departure have no piece")
+
+    if captured_piece and captured_piece.color == moving_piece.color:
+        raise MoveException("it's not alowed to capture allied piece")
 
     board[departure] = None
     board[destination] = moving_piece
