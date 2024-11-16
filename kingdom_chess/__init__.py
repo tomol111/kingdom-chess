@@ -83,6 +83,44 @@ class Color(enum.Enum):
 # Board
 # =====
 
+STARTING_BOARD_STATE: Final[Mapping[Position, Piece]] = {
+    Position(0, 0): Piece(PieceType.ROOK, Color.BLACK),
+    Position(1, 0): Piece(PieceType.KNIGHT, Color.BLACK),
+    Position(2, 0): Piece(PieceType.BISHOP, Color.BLACK),
+    Position(3, 0): Piece(PieceType.QUEEN, Color.BLACK),
+    Position(4, 0): Piece(PieceType.KING, Color.BLACK),
+    Position(5, 0): Piece(PieceType.BISHOP, Color.BLACK),
+    Position(6, 0): Piece(PieceType.KNIGHT, Color.BLACK),
+    Position(7, 0): Piece(PieceType.ROOK, Color.BLACK),
+
+    Position(0, 1): Piece(PieceType.PAWN, Color.BLACK),
+    Position(1, 1): Piece(PieceType.PAWN, Color.BLACK),
+    Position(2, 1): Piece(PieceType.PAWN, Color.BLACK),
+    Position(3, 1): Piece(PieceType.PAWN, Color.BLACK),
+    Position(4, 1): Piece(PieceType.PAWN, Color.BLACK),
+    Position(5, 1): Piece(PieceType.PAWN, Color.BLACK),
+    Position(6, 1): Piece(PieceType.PAWN, Color.BLACK),
+    Position(7, 1): Piece(PieceType.PAWN, Color.BLACK),
+
+    Position(0, 6): Piece(PieceType.PAWN, Color.WHITE),
+    Position(1, 6): Piece(PieceType.PAWN, Color.WHITE),
+    Position(2, 6): Piece(PieceType.PAWN, Color.WHITE),
+    Position(3, 6): Piece(PieceType.PAWN, Color.WHITE),
+    Position(4, 6): Piece(PieceType.PAWN, Color.WHITE),
+    Position(5, 6): Piece(PieceType.PAWN, Color.WHITE),
+    Position(6, 6): Piece(PieceType.PAWN, Color.WHITE),
+    Position(7, 6): Piece(PieceType.PAWN, Color.WHITE),
+
+    Position(0, 7): Piece(PieceType.ROOK, Color.WHITE),
+    Position(1, 7): Piece(PieceType.KNIGHT, Color.WHITE),
+    Position(2, 7): Piece(PieceType.BISHOP, Color.WHITE),
+    Position(3, 7): Piece(PieceType.QUEEN, Color.WHITE),
+    Position(4, 7): Piece(PieceType.KING, Color.WHITE),
+    Position(5, 7): Piece(PieceType.BISHOP, Color.WHITE),
+    Position(6, 7): Piece(PieceType.KNIGHT, Color.WHITE),
+    Position(7, 7): Piece(PieceType.ROOK, Color.WHITE),
+}
+
 
 class Board:
     """
@@ -118,32 +156,7 @@ class Board:
 
     @classmethod
     def initialy_filled(cls) -> Board:
-        board = Board()
-
-        border_pieces_types = [
-            PieceType.ROOK,
-            PieceType.KNIGHT,
-            PieceType.BISHOP,
-            PieceType.QUEEN,
-            PieceType.KING,
-            PieceType.BISHOP,
-            PieceType.KNIGHT,
-            PieceType.ROOK,
-        ]
-
-        for i, typ in enumerate(border_pieces_types):
-            board._grid[0][i] = Piece(typ, Color.BLACK)
-
-        for i in range(BOARD_SIDE_LEN):
-            board._grid[1][i] = Piece(PieceType.PAWN, Color.BLACK)
-
-        for i in range(BOARD_SIDE_LEN):
-            board._grid[6][i] = Piece(PieceType.PAWN, Color.WHITE)
-
-        for i, typ in enumerate(border_pieces_types):
-            board._grid[7][i] = Piece(typ, Color.WHITE)
-
-        return board
+        return Board.from_mapping(STARTING_BOARD_STATE)
 
     def to_mapping(self) -> dict[Position, Piece]:
         return {
