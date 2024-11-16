@@ -224,45 +224,45 @@ def make_move(board: Board, departure: Position, destination: Position) -> None:
     if departure == destination:
         raise MoveException("destination is the same as departure")
 
-    moving_piece = board[departure]
+    if not (moving_piece := board[departure]):
+        raise MoveException("departure have no piece")
+
     captured_piece = board[destination]
     dx, dy = destination.offset_from(departure)
-    match moving_piece:
-        case None:
-            raise MoveException("departure have no piece")
-        case Piece(typ=PieceType.KING):
+
+    match moving_piece.typ:
+        case PieceType.KING:
             if abs(dx) > 1 or abs(dy) > 1:
                 raise MoveException("invalid king move")
-        case Piece(typ=PieceType.ROOK):
+        case PieceType.ROOK:
             if dx != 0 and dy != 0:
                 raise MoveException("invalid rook move")
             if not is_path_clear(board, departure, destination):
                 raise MoveException("rook can't leap over intervening pieces")
-        case Piece(typ=PieceType.BISHOP):
+        case PieceType.BISHOP:
             if abs(dx) != abs(dy):
                 raise MoveException("invalid bishop move")
             if not is_path_clear(board, departure, destination):
                 raise MoveException("bichop can't leap over intervening pieces")
-        case Piece(typ=PieceType.KNIGHT):
+        case PieceType.KNIGHT:
             if (abs(dx), abs(dy)) not in [(1, 2), (2, 1)]:
                 raise MoveException("invalid knight move")
-        case Piece(typ=PieceType.QUEEN):
+        case PieceType.QUEEN:
             if abs(dx) != abs(dy) and dx != 0 and dy != 0:
                 raise MoveException("invalid queen move")
             if not is_path_clear(board, departure, destination):
                 raise MoveException("queen can't leap over intervening pieces")
-        case Piece(typ=PieceType.PAWN, color=color):
-            if abs(dx) == 1 and dy == (1 if color is Color.BLACK else -1):  # diagonal move
+        case PieceType.PAWN:
+            forward = (1 if moving_piece.color is Color.BLACK else -1)
+            if abs(dx) == 1 and dy == forward:  # diagonal move
                 if not captured_piece:
                     raise MoveException("pawn can move diagonally only when capturing")
             elif dx == 0:  # vertical move
-                first_move = departure.y == (1 if color is Color.BLACK else 6)
-                forward_move = dy == (1 if color is Color.BLACK else -1)
-                long_forward_move = dy == (2 if color is Color.BLACK else -2)
-                valid_long_move = first_move and long_forward_move
-                if not forward_move and not valid_long_move:
+                first_move = departure.y == (1 if moving_piece.color is Color.BLACK else 6)
+                double_move = first_move and dy == 2*forward
+                if dy != forward and not double_move:
                     raise MoveException("invalid pawn move")
-                if valid_long_move and not is_path_clear(board, departure, destination):
+                if double_move and not is_path_clear(board, departure, destination):
                     raise MoveException("pawn can't leap over intervening piece")
                 if captured_piece:
                     raise MoveException("pawn can't capture on forward move")
