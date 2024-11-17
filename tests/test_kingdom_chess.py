@@ -651,3 +651,12 @@ def test_pawn_should_not_move_diagonaly():
 
     with pytest.raises(MoveException):
         make_move(board, Position(4, 1), Position(5, 2))
+
+
+def test_should_not_allow_to_place_king_under_immediate_attack():
+    board = Board()
+    board[Position(5, 4)] = Piece(PieceType.KING, Color.WHITE)
+    board[Position(3, 5)] = Piece(PieceType.KING, Color.BLACK)
+
+    with pytest.raises(MoveException):
+        make_move(board, Position(5, 4), Position(4, 4))

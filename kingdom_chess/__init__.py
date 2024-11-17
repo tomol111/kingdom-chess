@@ -79,6 +79,10 @@ class Color(enum.Enum):
     WHITE = enum.auto()
     BLACK = enum.auto()
 
+    @property
+    def reversed(self) -> Color:
+        return Color.BLACK if self is Color.WHITE else Color.WHITE
+
 
 # Board
 # =====
@@ -234,11 +238,32 @@ class MoveException(Exception):
 
 
 def make_move(board: Board, departure: Position, destination: Position) -> None:
+    """Move piece from departure to destination after checking if it is valid."""
+
+    if err_msg := validate_move(board, departure, destination):
+        raise MoveException(err_msg)
+
+    moving_piece = board[departure]
+    assert moving_piece
+    if moving_piece.typ == PieceType.KING and not is_position_safe(
+        board, destination, enemy_color=moving_piece.color.reversed
+    ):
+        raise MoveException("move leaves king under immediate attack")
+
+    board[departure] = None
+    board[destination] = moving_piece
+
+
+def validate_move(board: Board, departure: Position, destination: Position) -> str | None:
+    """Returns `None` if move is valid or `str` message describing what is wrong with given move.
+
+    It does not validate if king will be placed under immediate attack.
+    """
     if departure == destination:
-        raise MoveException("destination is the same as departure")
+        return "destination is the same as departure"
 
     if not (moving_piece := board[departure]):
-        raise MoveException("departure have no piece")
+        return "departure have no piece"
 
     captured_piece = board[destination]
     dx, dy = destination.offset_from(departure)
@@ -246,47 +271,59 @@ def make_move(board: Board, departure: Position, destination: Position) -> None:
     match moving_piece.typ:
         case PieceType.KING:
             if abs(dx) > 1 or abs(dy) > 1:
-                raise MoveException("invalid king move")
+                return "invalid king move"
         case PieceType.ROOK:
             if dx != 0 and dy != 0:
-                raise MoveException("invalid rook move")
+                return "invalid rook move"
             if not is_path_clear(board, departure, destination):
-                raise MoveException("rook can't leap over intervening pieces")
+                return "rook can't leap over intervening pieces"
         case PieceType.BISHOP:
             if abs(dx) != abs(dy):
-                raise MoveException("invalid bishop move")
+                return "invalid bishop move"
             if not is_path_clear(board, departure, destination):
-                raise MoveException("bichop can't leap over intervening pieces")
+                return "bishop can't leap over intervening pieces"
         case PieceType.KNIGHT:
             if (abs(dx), abs(dy)) not in [(1, 2), (2, 1)]:
-                raise MoveException("invalid knight move")
+                return "invalid knight move"
         case PieceType.QUEEN:
             if abs(dx) != abs(dy) and dx != 0 and dy != 0:
-                raise MoveException("invalid queen move")
+                return "invalid queen move"
             if not is_path_clear(board, departure, destination):
-                raise MoveException("queen can't leap over intervening pieces")
+                return "queen can't leap over intervening pieces"
         case PieceType.PAWN:
             forward = (1 if moving_piece.color is Color.BLACK else -1)
             if abs(dx) == 1 and dy == forward:  # diagonal move
                 if not captured_piece:
-                    raise MoveException("pawn can move diagonally only when capturing")
+                    return "pawn can move diagonally only when capturing"
             elif dx == 0:  # vertical move
                 first_move = departure.y == (1 if moving_piece.color is Color.BLACK else 6)
                 double_move = first_move and dy == 2*forward
                 if dy != forward and not double_move:
-                    raise MoveException("invalid pawn move")
+                    return "invalid pawn move"
                 if double_move and not is_path_clear(board, departure, destination):
-                    raise MoveException("pawn can't leap over intervening piece")
+                    return "pawn can't leap over intervening piece"
                 if captured_piece:
-                    raise MoveException("pawn can't capture on forward move")
+                    return "pawn can't capture on forward move"
             else:
-                raise MoveException("invalid pawn move")
+                return "invalid pawn move"
 
     if captured_piece and captured_piece.color == moving_piece.color:
-        raise MoveException("it's not alowed to capture allied piece")
+        return "it's not alowed to capture allied piece"
 
-    board[departure] = None
-    board[destination] = moving_piece
+    return None
+
+
+def is_move_valid(board: Board, departure: Position, destination: Position) -> bool:
+    """Similar to `validate_move()` but returns `bool` instead."""
+    return validate_move(board, departure, destination) is None
+
+
+def is_position_safe(board: Board, position: Position, enemy_color: Color) -> bool:
+    """Check if given position is free of immediate attack."""
+    return not any(
+        piece.color is enemy_color and is_move_valid(board, attacking_position, position)
+        for attacking_position, piece in board.to_mapping().items()
+    )
 
 
 def is_path_clear(board: Board, departure: Position, destination: Position) -> bool:
