@@ -13,15 +13,24 @@ from kingdom_chess import (
 )
 
 
-def test_coordinates_should_not_point_outside_board():
+@pytest.mark.parametrize(("file", "rank"), [(-1, 4), (8, 4), (2, -1), (2, 8)])
+def test_position_should_not_be_outside_board(file, rank):
     with pytest.raises(ValueError):
-        Position(-1, 4)
-    with pytest.raises(ValueError):
-        Position(8, 4)
-    with pytest.raises(ValueError):
-        Position(2, -1)
-    with pytest.raises(ValueError):
-        Position(2, 8)
+        _ = Position(file, rank)
+
+
+@pytest.mark.parametrize(("coordinates", "file", "rank"), [
+    ("a8", 0, 0), ("c2", 2, 6), ("h1", 7, 7)
+])
+def test_position_should_be_creatable_from_coordinates(coordinates, file, rank):
+    assert Position.from_coordinates(coordinates) == Position(file, rank)
+
+
+@pytest.mark.parametrize("coords", ["a83", "b", "i3", "b0"])
+def test_position_should_not_be_created_from_invalid_coordinates(coords):
+    with pytest.raises(ValueError) as exc_info:
+        _ = Position.from_coordinates(coords)
+    assert coords in exc_info.value.args
 
 
 def test_board_should_place_a_piece():

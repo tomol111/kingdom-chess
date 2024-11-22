@@ -18,18 +18,25 @@ RANKS = "87654321"
 
 @dataclasses.dataclass(frozen=True)
 class Position:
+    """Valid position on the board."""
+
     x: int
     y: int
 
     def __post_init__(self) -> None:
-        x_invalid = not 0 <= self.x < BOARD_SIDE_LEN
-        y_invalid = not 0 <= self.y < BOARD_SIDE_LEN
-        if x_invalid and y_invalid:
-            raise ValueError(f"invalid values of {self!r}")
-        if x_invalid:
-            raise ValueError(f"invalid x value of {self!r}")
-        if y_invalid:
-            raise ValueError(f"invalid y value of {self!r}")
+        if (not 0 <= self.x < BOARD_SIDE_LEN or not 0 <= self.y < BOARD_SIDE_LEN):
+            raise ValueError(self.x, self.y)
+
+    @classmethod
+    def from_coordinates(cls, coords: str) -> Position:
+        """Create `Position` from "{file}{rank}" labels."""
+        if len(coords) != 2:
+            raise ValueError(coords)
+        file = FILES.find(coords[0])
+        rank = RANKS.find(coords[1])
+        if file == -1 or rank == -1:
+            raise ValueError(coords)
+        return Position(file, rank)
 
     def offset_from(self, other: Position) -> tuple[int, int]:
         return (self.x - other.x, self.y - other.y)
