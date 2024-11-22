@@ -12,6 +12,9 @@ from collections.abc import Mapping
 
 BOARD_SIDE_LEN: Final = 8
 
+FILES = "abcdefgh"
+RANKS = "87654321"
+
 
 @dataclasses.dataclass(frozen=True)
 class Position:
@@ -192,11 +195,20 @@ class Board:
 
         return board
 
-    def __str__(self) -> str:
+    def to_unicode(self) -> str:
+        """Create unicode image of the board state ."""
         return "\n".join(
-            " ".join(piece_to_unicode[self._grid[y][x]] for x in range(BOARD_SIDE_LEN))
-            for y in range(BOARD_SIDE_LEN)
+            " ".join(piece_to_unicode[element] for element in row)
+            for row in self._grid
         ) + "\n"
+
+    def to_unicode_with_coordinates(self) -> str:
+        """Create unicode image of the board state with showed coordinates on the edges."""
+        rows = [[" ", *FILES], *(
+            [rank, *(piece_to_unicode[element] for element in row), rank]
+            for rank, row in zip(RANKS, self._grid)
+        ), [" ", *FILES]]
+        return "\n".join(" ".join(row) for row in rows) + "\n"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Board):

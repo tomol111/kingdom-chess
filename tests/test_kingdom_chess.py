@@ -102,7 +102,7 @@ def test_board_should_be_represented_with_unicode():
     board[Position(5, 6)] = Piece(PieceType.KNIGHT, Color.BLACK)
     board[Position(7, 1)] = Piece(PieceType.KING, Color.WHITE)
 
-    assert str(board) == textwrap.dedent("""\
+    assert board.to_unicode() == textwrap.dedent("""\
         ⋅ ⋅ ⋅ ♙ ⋅ ⋅ ⋅ ⋅
         ♟ ♜ ♚ ⋅ ⋅ ♛ ⋅ ♔
         ⋅ ⋅ ♗ ⋅ ⋅ ⋅ ⋅ ⋅
@@ -111,6 +111,24 @@ def test_board_should_be_represented_with_unicode():
         ⋅ ⋅ ⋅ ⋅ ♖ ⋅ ⋅ ⋅
         ♕ ⋅ ⋅ ⋅ ⋅ ♞ ⋅ ⋅
         ⋅ ⋅ ♘ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+
+
+def test_board_should_be_represented_with_unicode_with_showed_coordinates():
+    board = Board()
+    board[Position(1, 3)] = Piece(PieceType.BISHOP, Color.BLACK)
+    board[Position(4, 5)] = Piece(PieceType.ROOK, Color.WHITE)
+    assert board.to_unicode_with_coordinates() == textwrap.dedent("""\
+          a b c d e f g h
+        8 ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ 8
+        7 ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ 7
+        6 ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ 6
+        5 ⋅ ♝ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ 5
+        4 ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ 4
+        3 ⋅ ⋅ ⋅ ⋅ ♖ ⋅ ⋅ ⋅ 3
+        2 ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ 2
+        1 ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ 1
+          a b c d e f g h
     """)
 
 
