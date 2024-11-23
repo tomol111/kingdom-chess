@@ -86,8 +86,8 @@ class PieceType(enum.Enum):
 
 
 class Color(enum.Enum):
-    WHITE = enum.auto()
-    BLACK = enum.auto()
+    WHITE = "white"
+    BLACK = "black"
 
     @property
     def reversed(self) -> Color:
@@ -246,6 +246,28 @@ unicode_to_piece: Final[Mapping[str, Piece | None]] = {
 piece_to_unicode: Final[Mapping[Piece | None, str]] = {
     piece: unicode for unicode, piece in unicode_to_piece.items()
 }
+
+
+# play
+# ====
+
+
+def play():
+    board = Board.initialy_filled()
+    player = Color.WHITE
+    while True:
+        print()
+        print(board.to_unicode_with_coordinates())
+        try:
+            player_input = input(f"[{player.value}] ")
+        except EOFError:
+            print()
+            break
+        departure = Position.from_coordinates(player_input[:2])
+        destination = Position.from_coordinates(player_input[2:])
+        make_move(board, departure, destination)
+
+        player = player.reversed
 
 
 # Move
