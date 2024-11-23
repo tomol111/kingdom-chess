@@ -5,6 +5,7 @@ import pytest
 from kingdom_chess import (
     Board,
     Color,
+    is_king_under_attack,
     make_move,
     MoveException,
     Piece,
@@ -705,3 +706,18 @@ def test_should_not_allow_to_place_king_under_immediate_attack():
 
     with pytest.raises(MoveException):
         make_move(board, Position(5, 4), Position(4, 4))
+
+
+def test_should_answer_if_king_is_under_immediate_attack():
+    board = Board.from_unicode("""
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ♜ ⋅
+        ⋅ ⋅ ♚ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ♙ ⋅
+        ⋅ ♟ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ♗ ♔ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+        ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅ ⋅
+    """)
+    assert is_king_under_attack(board, Color.BLACK)
+    assert not is_king_under_attack(board, Color.WHITE)

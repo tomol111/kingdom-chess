@@ -256,22 +256,38 @@ piece_to_unicode: Final[Mapping[Piece | None, str]] = {
 # ====
 
 
-def play():
+def play() -> None:
+    """Provisional, untested game loop."""
     board = Board.initialy_filled()
-    player = Color.WHITE
+    player, enemy = Color.WHITE, Color.BLACK
+    print(board.to_unicode_with_coordinates())
     while True:
-        print()
-        print(board.to_unicode_with_coordinates(rotated=player is Color.BLACK))
         try:
             player_input = input(f"[{player.value}] ")
         except EOFError:
             print()
             break
-        departure = Position.from_coordinates(player_input[:2])
-        destination = Position.from_coordinates(player_input[2:])
-        make_move(board, departure, destination)
+        try:
+            departure = Position.from_coordinates(player_input[:2])
+            destination = Position.from_coordinates(player_input[2:])
+        except ValueError:
+            print("invalid coordinates")
+            continue
 
-        player = player.reversed
+        try:
+            make_move(board, departure, destination)
+        except MoveException as exc:
+            msg: str = exc.args[0]
+            print(msg)
+            continue
+
+        if is_king_under_attack(board, enemy):
+            print("CHECK!")
+
+        player, enemy = enemy, player
+
+        print()
+        print(board.to_unicode_with_coordinates(rotated=player is Color.BLACK))
 
 
 # Move
@@ -364,11 +380,22 @@ def is_move_valid(board: Board, departure: Position, destination: Position) -> b
 
 
 def is_position_safe(board: Board, position: Position, enemy_color: Color) -> bool:
-    """Check if given position is free of immediate attack."""
+    """Check if given position is free of immediate attack.
+
+    Given position can be occupied or not.
+    """
     return not any(
         piece.color is enemy_color and is_move_valid(board, attacking_position, position)
         for attacking_position, piece in board.to_mapping().items()
     )
+
+
+def is_king_under_attack(board: Board, color: Color) -> bool:
+    """Search if king of given color is under immediate attack."""
+    for pos, piece in board.to_mapping().items():
+        if piece.typ is PieceType.KING and piece.color is color:
+            return not is_position_safe(board, pos, color.reversed)
+    raise AssertionError("king has not been found")
 
 
 def is_path_clear(board: Board, departure: Position, destination: Position) -> bool:
