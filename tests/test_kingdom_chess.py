@@ -700,12 +700,29 @@ def test_pawn_should_not_move_diagonaly():
 
 
 def test_should_not_allow_to_place_king_under_immediate_attack():
-    board = Board()
-    board[Position(5, 4)] = Piece(PieceType.KING, Color.WHITE)
-    board[Position(3, 5)] = Piece(PieceType.KING, Color.BLACK)
+    initial_state = {
+        Position(5, 4): Piece(PieceType.KING, Color.WHITE),
+        Position(3, 5): Piece(PieceType.KING, Color.BLACK),
+    }
+    board = Board.from_mapping(initial_state)
 
     with pytest.raises(MoveException):
         make_move(board, Position(5, 4), Position(4, 4))
+    assert board.to_mapping() == initial_state
+
+
+def test_should_not_allow_to_leave_king_under_immediate_attack():
+    initial_state = {
+        Position(2, 2): Piece(PieceType.KING, Color.BLACK),
+        Position(3, 3): Piece(PieceType.PAWN, Color.BLACK),
+        Position(2, 4): Piece(PieceType.PAWN, Color.WHITE),
+        Position(4, 4): Piece(PieceType.BISHOP, Color.WHITE),
+    }
+    board = Board.from_mapping(initial_state)
+
+    with pytest.raises(MoveException):
+        make_move(board, Position(3, 3), Position(2, 4))
+    assert board.to_mapping() == initial_state
 
 
 def test_should_answer_if_king_is_under_immediate_attack():

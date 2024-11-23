@@ -306,19 +306,22 @@ def make_move(board: Board, departure: Position, destination: Position) -> None:
 
     moving_piece = board[departure]
     assert moving_piece
-    if moving_piece.typ == PieceType.KING and not is_position_safe(
-        board, destination, enemy_color=moving_piece.color.reversed
-    ):
-        raise MoveException("move leaves king under immediate attack")
 
     board[departure] = None
+    captured_piece = board[destination]
     board[destination] = moving_piece
+
+    if is_king_under_attack(board, moving_piece.color):
+        # restore previous state
+        board[destination] = captured_piece
+        board[departure] = moving_piece
+        raise MoveException("move leaves king under immediate attack")
 
 
 def validate_move(board: Board, departure: Position, destination: Position) -> str | None:
     """Returns `None` if move is valid or `str` message describing what is wrong with given move.
 
-    It does not validate if king will be placed under immediate attack.
+    It does not validate if king will be leaved under immediate attack.
     """
     if departure == destination:
         return "destination is the same as departure"
@@ -391,11 +394,14 @@ def is_position_safe(board: Board, position: Position, enemy_color: Color) -> bo
 
 
 def is_king_under_attack(board: Board, color: Color) -> bool:
-    """Search if king of given color is under immediate attack."""
+    """Search if king of given color is under immediate attack.
+
+    If king has not been found return `False`.
+    """
     for pos, piece in board.to_mapping().items():
         if piece.typ is PieceType.KING and piece.color is color:
             return not is_position_safe(board, pos, color.reversed)
-    raise AssertionError("king has not been found")
+    return False
 
 
 def is_path_clear(board: Board, departure: Position, destination: Position) -> bool:
