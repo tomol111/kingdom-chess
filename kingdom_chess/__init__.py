@@ -209,12 +209,16 @@ class Board:
             for row in self._grid
         ) + "\n"
 
-    def to_unicode_with_coordinates(self) -> str:
+    def to_unicode_with_coordinates(self, rotated: bool = False) -> str:
         """Create unicode image of the board state with showed coordinates on the edges."""
-        rows = [[" ", *FILES], *(
+        rows = [[" ", *FILES, " "], *(
             [rank, *(piece_to_unicode[element] for element in row), rank]
             for rank, row in zip(RANKS, self._grid)
-        ), [" ", *FILES]]
+        ), [" ", *FILES, " "]]
+        if rotated:
+            for row in rows:
+                row.reverse()
+            rows.reverse()
         return "\n".join(" ".join(row) for row in rows) + "\n"
 
     def __eq__(self, other: object) -> bool:
@@ -257,7 +261,7 @@ def play():
     player = Color.WHITE
     while True:
         print()
-        print(board.to_unicode_with_coordinates())
+        print(board.to_unicode_with_coordinates(rotated=player is Color.BLACK))
         try:
             player_input = input(f"[{player.value}] ")
         except EOFError:
