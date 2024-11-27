@@ -294,35 +294,53 @@ def play() -> None:
 # ====
 
 
+@dataclasses.dataclass(frozen=True)
+class Move:
+    """Should represents player's *valid* and potentialy *safe* move on the board.
+
+    *Valid* means it follows the rules of pieces' moves.
+    *Safe* means it is *valid* and follows the rules of king protection.
+    """
+    departure: Position
+    destination: Position
+    moving_piece: Piece
+    captured_piece: Piece | None
+
+
+def do_move(move: Move, board: Board) -> None:
+    """Apply move on the board."""
+    board[move.departure] = None
+    board[move.destination] = move.moving_piece
+
+
+def undo_move(move: Move, board: Board) -> None:
+    """Reverse move on the board."""
+    board[move.destination] = move.captured_piece
+    board[move.departure] = move.moving_piece
+
+
 class MoveException(Exception):
     pass
 
 
 def make_move(board: Board, departure: Position, destination: Position) -> None:
-    """Move piece from departure to destination after checking if it is valid."""
+    """Move piece after checking if it is *valid* and *safe*."""
 
-    if err_msg := validate_move(board, departure, destination):
-        raise MoveException(err_msg)
+    move = interpret_move(board, departure, destination)
 
-    moving_piece = board[departure]
-    assert moving_piece
+    if isinstance(move, str):
+        raise MoveException(move)
 
-    board[departure] = None
-    captured_piece = board[destination]
-    board[destination] = moving_piece
+    do_move(move, board)
 
-    if is_king_under_attack(board, moving_piece.color):
-        # restore previous state
-        board[destination] = captured_piece
-        board[departure] = moving_piece
+    if is_king_under_attack(board, move.moving_piece.color):
+        undo_move(move, board)
         raise MoveException("move leaves king under immediate attack")
 
 
-def validate_move(board: Board, departure: Position, destination: Position) -> str | None:
-    """Returns `None` if move is valid or `str` message describing what is wrong with given move.
+def interpret_move(board: Board, departure: Position, destination: Position) -> Move | str:
+    """Create `Move` or `str` containing message which describes what is wrong with given move."""
 
-    It does not validate if king will be leaved under immediate attack.
-    """
     if departure == destination:
         return "destination is the same as departure"
 
@@ -374,12 +392,11 @@ def validate_move(board: Board, departure: Position, destination: Position) -> s
     if captured_piece and captured_piece.color == moving_piece.color:
         return "it's not alowed to capture allied piece"
 
-    return None
+    return Move(departure, destination, moving_piece, captured_piece)
 
 
 def is_move_valid(board: Board, departure: Position, destination: Position) -> bool:
-    """Similar to `validate_move()` but returns `bool` instead."""
-    return validate_move(board, departure, destination) is None
+    return isinstance(interpret_move(board, departure, destination), Move)
 
 
 def is_position_safe(board: Board, position: Position, enemy_color: Color) -> bool:
