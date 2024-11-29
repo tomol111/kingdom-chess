@@ -701,6 +701,34 @@ def test_pawn_should_not_move_diagonaly():
         make_move(board, Position(4, 1), Position(5, 2))
 
 
+def test_should_promote_pawn():
+    board = Board()
+    board[Position(4, 6)] = Piece(PieceType.PAWN, Color.BLACK)
+
+    make_move(board, Position(4, 6), Position(4, 7), promotion_to=PieceType.QUEEN)
+
+    assert board[Position(4, 7)] == Piece(PieceType.QUEEN, Color.BLACK)
+
+
+def test_should_force_promotion():
+    board = Board()
+    board[Position(2, 1)] = Piece(PieceType.PAWN, Color.WHITE)
+
+    with pytest.raises(MoveException):
+        make_move(board, Position(2, 1), Position(2, 0), promotion_to=None)
+
+
+def test_should_reject_invalid_promotion():
+    board = Board()
+    board[Position(2, 2)] = Piece(PieceType.PAWN, Color.WHITE)
+    board[Position(3, 5)] = Piece(PieceType.BISHOP, Color.WHITE)
+
+    with pytest.raises(MoveException):
+        make_move(board, Position(2, 2), Position(2, 1), promotion_to=PieceType.ROOK)
+    with pytest.raises(MoveException):
+        make_move(board, Position(3, 5), Position(4, 6), promotion_to=PieceType.QUEEN)
+
+
 def test_should_not_allow_to_place_king_under_immediate_attack():
     initial_state = {
         Position(5, 4): Piece(PieceType.KING, Color.WHITE),

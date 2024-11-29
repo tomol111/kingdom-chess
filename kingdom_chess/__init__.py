@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import enum
 import dataclasses
-from typing import Final
+from typing import Final, Literal
 from collections.abc import Mapping
 
 
@@ -83,6 +83,9 @@ class PieceType(enum.Enum):
     BISHOP = enum.auto()
     KNIGHT = enum.auto()
     PAWN = enum.auto()
+
+
+PromotionTarget = Literal[PieceType.QUEEN, PieceType.ROOK, PieceType.BISHOP, PieceType.KNIGHT]
 
 
 class Color(enum.Enum):
@@ -269,7 +272,13 @@ def play() -> None:
             break
         try:
             departure = Position.from_coordinates(player_input[:2])
-            destination = Position.from_coordinates(player_input[2:])
+            destination = Position.from_coordinates(player_input[2:4])
+            match player_input[4:].lower():
+                case "/q": promotion_to = PieceType.QUEEN
+                case "/r": promotion_to = PieceType.ROOK
+                case "/b": promotion_to = PieceType.BISHOP
+                case "/n": promotion_to = PieceType.KNIGHT
+                case _: promotion_to = None
         except ValueError:
             print("invalid coordinates")
             continue
@@ -279,7 +288,7 @@ def play() -> None:
             continue
 
         try:
-            make_move(board, departure, destination)
+            make_move(board, departure, destination, promotion_to)
         except MoveException as exc:
             msg: str = exc.args[0]
             print(msg)
@@ -320,12 +329,13 @@ class Move:
     destination: Position
     moving_piece: Piece
     captured_piece: Piece | None
+    promotion_to: Piece | None = None
 
 
 def do_move(move: Move, board: Board) -> None:
     """Apply move on the board."""
     board[move.departure] = None
-    board[move.destination] = move.moving_piece
+    board[move.destination] = move.promotion_to or move.moving_piece
 
 
 def undo_move(move: Move, board: Board) -> None:
@@ -338,10 +348,15 @@ class MoveException(Exception):
     pass
 
 
-def make_move(board: Board, departure: Position, destination: Position) -> None:
+def make_move(
+    board: Board,
+    departure: Position,
+    destination: Position,
+    promotion_to: PromotionTarget | None = None
+) -> None:
     """Move piece after checking if it is *valid* and *safe*."""
 
-    move = interpret_move(board, departure, destination)
+    move = interpret_move(board, departure, destination, promotion_to)
 
     if isinstance(move, str):
         raise MoveException(move)
@@ -353,7 +368,12 @@ def make_move(board: Board, departure: Position, destination: Position) -> None:
         raise MoveException("move leaves king under immediate attack")
 
 
-def interpret_move(board: Board, departure: Position, destination: Position) -> Move | str:
+def interpret_move(
+    board: Board,
+    departure: Position,
+    destination: Position,
+    promotion_to: PromotionTarget | None = None
+) -> Move | str:
     """Create `Move` or `str` containing message which describes what is wrong with given move."""
 
     if departure == destination:
@@ -403,9 +423,24 @@ def interpret_move(board: Board, departure: Position, destination: Position) -> 
                     return "pawn can't capture on forward move"
             else:
                 return "invalid pawn move"
+            if destination.y == (7 if moving_piece.color is Color.BLACK else 0):
+                if not promotion_to:
+                    return "pawn has to be promoted to something"
+                return Move(
+                    departure,
+                    destination,
+                    moving_piece,
+                    captured_piece,
+                    Piece(promotion_to, moving_piece.color),
+                )
+            if promotion_to:
+                return "pawn can't be promoted here"
 
     if captured_piece and captured_piece.color == moving_piece.color:
         return "it's not alowed to capture allied piece"
+
+    if promotion_to:
+        return "only pawn can be promoted"
 
     return Move(departure, destination, moving_piece, captured_piece)
 
