@@ -259,11 +259,11 @@ piece_to_unicode: Final[Mapping[Piece | None, str]] = {
 def play() -> None:
     """Provisional, untested game loop."""
     board = Board.initialy_filled()
-    player, enemy = Color.WHITE, Color.BLACK
+    moving_color, enemy_color = Color.WHITE, Color.BLACK
     print(board.to_unicode_with_coordinates())
     while True:
         try:
-            player_input = input(f"[{player.value}] ")
+            player_input = input(f"[{moving_color.value}] ")
         except EOFError:
             print()
             break
@@ -274,6 +274,10 @@ def play() -> None:
             print("invalid coordinates")
             continue
 
+        if (moving_piece := board[departure]) and moving_piece.color is enemy_color:
+            print("can't move enemy piece")
+            continue
+
         try:
             make_move(board, departure, destination)
         except MoveException as exc:
@@ -281,18 +285,18 @@ def play() -> None:
             print(msg)
             continue
 
-        king_state = deduce_king_state(board, enemy)
+        king_state = deduce_king_state(board, enemy_color)
         if king_state is KingState.CHECK:
             print("check")
         if king_state is KingState.CHECKMATE:
-            print(f"CHECKMATE: {player.value} won!")
-            print(board.to_unicode_with_coordinates(rotated=player is Color.BLACK))
+            print(f"CHECKMATE: {moving_color.value} won!")
+            print(board.to_unicode_with_coordinates(rotated=moving_color is Color.BLACK))
             break
 
-        player, enemy = enemy, player
+        moving_color, enemy_color = enemy_color, moving_color
 
         print()
-        print(board.to_unicode_with_coordinates(rotated=player is Color.BLACK))
+        print(board.to_unicode_with_coordinates(rotated=moving_color is Color.BLACK))
 
 
 # Move
