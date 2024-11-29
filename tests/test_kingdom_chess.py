@@ -4,7 +4,9 @@ import pytest
 
 from kingdom_chess import (
     Board,
+    KingState,
     Color,
+    deduce_king_state,
     is_king_under_attack,
     make_move,
     MoveException,
@@ -723,6 +725,46 @@ def test_should_not_allow_to_leave_king_under_immediate_attack():
     with pytest.raises(MoveException):
         make_move(board, Position(3, 3), Position(2, 4))
     assert board.to_mapping() == initial_state
+
+
+def test_should_detect_if_king_is_in_check():
+    initial_state = {
+        Position(2, 2): Piece(PieceType.KING, Color.BLACK),
+        Position(3, 3): Piece(PieceType.PAWN, Color.BLACK),
+        Position(2, 4): Piece(PieceType.QUEEN, Color.WHITE),
+        Position(4, 7): Piece(PieceType.KING, Color.WHITE),
+    }
+    board = Board.from_mapping(initial_state)
+
+    check_status = deduce_king_state(board, Color.BLACK)
+    assert check_status == KingState.CHECK
+
+
+def test_should_detect_checkmate_if_king_cant_move_to_safe_place():
+    initial_state = {
+        Position(0, 0): Piece(PieceType.KING, Color.BLACK),
+        Position(0, 2): Piece(PieceType.KING, Color.WHITE),
+        Position(1, 2): Piece(PieceType.ROOK, Color.WHITE),
+        Position(2, 2): Piece(PieceType.QUEEN, Color.WHITE),
+    }
+    board = Board.from_mapping(initial_state)
+
+    check_status = deduce_king_state(board, Color.BLACK)
+    assert check_status == KingState.CHECKMATE
+
+
+def test_should_reject_mate_if_ally_can_save_king():
+    initial_state = {
+        Position(0, 0): Piece(PieceType.KING, Color.BLACK),
+        Position(4, 0): Piece(PieceType.BISHOP, Color.BLACK),
+        Position(0, 2): Piece(PieceType.KING, Color.WHITE),
+        Position(1, 2): Piece(PieceType.ROOK, Color.WHITE),
+        Position(2, 2): Piece(PieceType.QUEEN, Color.WHITE),
+    }
+    board = Board.from_mapping(initial_state)
+
+    check_status = deduce_king_state(board, Color.BLACK)
+    assert check_status == KingState.CHECK
 
 
 def test_should_answer_if_king_is_under_immediate_attack():

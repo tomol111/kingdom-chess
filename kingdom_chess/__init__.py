@@ -281,8 +281,13 @@ def play() -> None:
             print(msg)
             continue
 
-        if is_king_under_attack(board, enemy):
-            print("CHECK!")
+        king_state = deduce_king_state(board, enemy)
+        if king_state is KingState.CHECK:
+            print("check")
+        if king_state is KingState.CHECKMATE:
+            print(f"CHECKMATE: {player.value} won!")
+            print(board.to_unicode_with_coordinates(rotated=player is Color.BLACK))
+            break
 
         player, enemy = enemy, player
 
@@ -292,6 +297,12 @@ def play() -> None:
 
 # Move
 # ====
+
+
+class KingState(enum.Enum):
+    SAFE = enum.auto()
+    CHECK = enum.auto()
+    CHECKMATE = enum.auto()
 
 
 @dataclasses.dataclass(frozen=True)
@@ -397,6 +408,35 @@ def interpret_move(board: Board, departure: Position, destination: Position) -> 
 
 def is_move_valid(board: Board, departure: Position, destination: Position) -> bool:
     return isinstance(interpret_move(board, departure, destination), Move)
+
+
+def deduce_king_state(board: Board, next_moving_color: Color):
+    if not is_king_under_attack(board, next_moving_color):
+        return KingState.SAFE
+
+    pieces_positions = [
+        pos for pos, piece in board.to_mapping().items()
+        if piece.color is next_moving_color
+    ]
+    all_positions = [Position(x, y) for x in range(BOARD_SIDE_LEN) for y in range(BOARD_SIDE_LEN)]
+    all_potential_moves = (
+        potential_move
+        for pos in pieces_positions
+        for new_pos in all_positions
+        if isinstance(
+            potential_move := interpret_move(board, pos, new_pos),
+            Move,
+        )
+    )
+
+    for potential_move in all_potential_moves:
+        do_move(potential_move, board)
+        if not is_king_under_attack(board, next_moving_color):
+            undo_move(potential_move, board)
+            return KingState.CHECK
+        undo_move(potential_move, board)
+
+    return KingState.CHECKMATE
 
 
 def is_position_safe(board: Board, position: Position, enemy_color: Color) -> bool:
