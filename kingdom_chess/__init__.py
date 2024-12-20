@@ -38,9 +38,6 @@ class Position:
             raise ValueError(coords)
         return Position(file, rank)
 
-    def offset_from(self, other: Position) -> tuple[int, int]:
-        return (self.x - other.x, self.y - other.y)
-
     def direction_to(self, destination: Position) -> tuple[int, int]:
         """Returns direction of move, if move is horizontal, vertical or diagonal."""
         assert (
@@ -273,6 +270,7 @@ def play() -> None:
         try:
             departure = Position.from_coordinates(player_input[:2])
             destination = Position.from_coordinates(player_input[2:4])
+            promotion_to: PromotionTarget | None
             match player_input[4:].lower():
                 case "/q": promotion_to = PieceType.QUEEN
                 case "/r": promotion_to = PieceType.ROOK
@@ -283,15 +281,17 @@ def play() -> None:
             print("invalid coordinates")
             continue
 
-        if (moving_piece := board[departure]) and moving_piece.color is enemy_color:
-            print("can't move enemy piece")
+        move = interpret_move(board, moving_color, departure, destination, promotion_to)
+
+        if isinstance(move, str):
+            print(move)
             continue
 
-        try:
-            make_move(board, departure, destination, promotion_to)
-        except MoveException as exc:
-            msg: str = exc.args[0]
-            print(msg)
+        do_move(move, board)
+
+        if is_king_under_attack(board, move.moving_piece.color):
+            undo_move(move, board)
+            print("move leaves king under immediate attack")
             continue
 
         king_state = deduce_king_state(board, enemy_color)
@@ -328,7 +328,7 @@ class Move:
     departure: Position
     destination: Position
     moving_piece: Piece
-    captured_piece: Piece | None
+    captured_piece: Piece | None = None
     promotion_to: Piece | None = None
 
 
@@ -348,28 +348,9 @@ class MoveException(Exception):
     pass
 
 
-def make_move(
-    board: Board,
-    departure: Position,
-    destination: Position,
-    promotion_to: PromotionTarget | None = None
-) -> None:
-    """Move piece after checking if it is *valid* and *safe*."""
-
-    move = interpret_move(board, departure, destination, promotion_to)
-
-    if isinstance(move, str):
-        raise MoveException(move)
-
-    do_move(move, board)
-
-    if is_king_under_attack(board, move.moving_piece.color):
-        undo_move(move, board)
-        raise MoveException("move leaves king under immediate attack")
-
-
 def interpret_move(
     board: Board,
+    moving_color: Color,
     departure: Position,
     destination: Position,
     promotion_to: PromotionTarget | None = None
@@ -382,8 +363,11 @@ def interpret_move(
     if not (moving_piece := board[departure]):
         return "departure have no piece"
 
+    if moving_piece.color is not moving_color:
+        return "can't move enemy piece"
+
     captured_piece = board[destination]
-    dx, dy = destination.offset_from(departure)
+    dx, dy = destination.x - departure.x, destination.y - departure.y
 
     match moving_piece.typ:
         case PieceType.KING:
@@ -408,12 +392,12 @@ def interpret_move(
             if not is_path_clear(board, departure, destination):
                 return "queen can't leap over intervening pieces"
         case PieceType.PAWN:
-            forward = (1 if moving_piece.color is Color.BLACK else -1)
+            forward = (1 if moving_color is Color.BLACK else -1)
             if abs(dx) == 1 and dy == forward:  # diagonal move
                 if not captured_piece:
                     return "pawn can move diagonally only when capturing"
             elif dx == 0:  # vertical move
-                first_move = departure.y == (1 if moving_piece.color is Color.BLACK else 6)
+                first_move = departure.y == (1 if moving_color is Color.BLACK else 6)
                 double_move = first_move and dy == 2*forward
                 if dy != forward and not double_move:
                     return "invalid pawn move"
@@ -423,7 +407,7 @@ def interpret_move(
                     return "pawn can't capture on forward move"
             else:
                 return "invalid pawn move"
-            if destination.y == (7 if moving_piece.color is Color.BLACK else 0):
+            if destination.y == (7 if moving_color is Color.BLACK else 0):
                 if not promotion_to:
                     return "pawn has to be promoted to something"
                 return Move(
@@ -431,12 +415,12 @@ def interpret_move(
                     destination,
                     moving_piece,
                     captured_piece,
-                    Piece(promotion_to, moving_piece.color),
+                    Piece(promotion_to, moving_color),
                 )
             if promotion_to:
                 return "pawn can't be promoted here"
 
-    if captured_piece and captured_piece.color == moving_piece.color:
+    if captured_piece and captured_piece.color == moving_color:
         return "it's not alowed to capture allied piece"
 
     if promotion_to:
@@ -445,11 +429,7 @@ def interpret_move(
     return Move(departure, destination, moving_piece, captured_piece)
 
 
-def is_move_valid(board: Board, departure: Position, destination: Position) -> bool:
-    return isinstance(interpret_move(board, departure, destination), Move)
-
-
-def deduce_king_state(board: Board, next_moving_color: Color):
+def deduce_king_state(board: Board, next_moving_color: Color) -> KingState:
     if not is_king_under_attack(board, next_moving_color):
         return KingState.SAFE
 
@@ -463,7 +443,7 @@ def deduce_king_state(board: Board, next_moving_color: Color):
         for pos in pieces_positions
         for new_pos in all_positions
         if isinstance(
-            potential_move := interpret_move(board, pos, new_pos),
+            potential_move := interpret_move(board, next_moving_color, pos, new_pos),
             Move,
         )
     )
@@ -484,7 +464,10 @@ def is_position_safe(board: Board, position: Position, enemy_color: Color) -> bo
     Given position can be occupied or not.
     """
     return not any(
-        piece.color is enemy_color and is_move_valid(board, attacking_position, position)
+        piece.color is enemy_color and isinstance(
+            interpret_move(board, enemy_color, attacking_position, position),
+            Move,
+        )
         for attacking_position, piece in board.to_mapping().items()
     )
 
