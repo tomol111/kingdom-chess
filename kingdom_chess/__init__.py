@@ -283,7 +283,7 @@ def play() -> None:
 
         move = interpret_move(board, moving_color, departure, destination, promotion_to)
 
-        if isinstance(move, str):
+        if isinstance(move, MoveInterpretError):
             print(move)
             continue
 
@@ -344,8 +344,7 @@ def undo_move(move: Move, board: Board) -> None:
     board[move.departure] = move.moving_piece
 
 
-class MoveException(Exception):
-    pass
+MoveInterpretError = str
 
 
 def interpret_move(
@@ -354,8 +353,8 @@ def interpret_move(
     departure: Position,
     destination: Position,
     promotion_to: PromotionTarget | None = None
-) -> Move | str:
-    """Create `Move` or `str` containing message which describes what is wrong with given move."""
+) -> Move | MoveInterpretError:
+    """Create `Move` or `MoveInterpretError` with message describing what is wrong with the move."""
 
     if departure == destination:
         return "destination is the same as departure"

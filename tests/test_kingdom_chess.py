@@ -11,7 +11,7 @@ from kingdom_chess import (
     do_move,
     interpret_move,
     is_king_under_attack,
-    MoveException,
+    MoveInterpretError,
     Piece,
     PieceType,
     Position,
@@ -593,7 +593,7 @@ def test_should_not_allow_to_place_king_under_immediate_attack():
     }
     board = Board.from_mapping(initial_state)
 
-    with pytest.raises(MoveException):
+    with pytest.raises(MoveInterpretError):
         make_move(board, Position(5, 4), Position(4, 4))
     assert board.to_mapping() == initial_state
 
@@ -608,7 +608,7 @@ def test_should_not_allow_to_leave_king_under_immediate_attack():
     }
     board = Board.from_mapping(initial_state)
 
-    with pytest.raises(MoveException):
+    with pytest.raises(MoveInterpretError):
         make_move(board, Position(3, 3), Position(2, 4))
     assert board.to_mapping() == initial_state
 
