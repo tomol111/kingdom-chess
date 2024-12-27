@@ -4,6 +4,7 @@ import pytest
 
 from kingdom_chess import (
     Board,
+    Game,
     KingState,
     Color,
     Move,
@@ -11,7 +12,7 @@ from kingdom_chess import (
     do_move,
     interpret_move,
     is_king_under_attack,
-    MoveInterpretError,
+    MoveError,
     Piece,
     PieceType,
     Position,
@@ -585,34 +586,6 @@ def test_should_reject_invalid_promotion():
     assert result == "only pawn can be promoted"
 
 
-@pytest.mark.skip
-def test_should_not_allow_to_place_king_under_immediate_attack():
-    initial_state = {
-        Position(5, 4): Piece(PieceType.KING, Color.WHITE),
-        Position(3, 5): Piece(PieceType.KING, Color.BLACK),
-    }
-    board = Board.from_mapping(initial_state)
-
-    with pytest.raises(MoveInterpretError):
-        make_move(board, Position(5, 4), Position(4, 4))
-    assert board.to_mapping() == initial_state
-
-
-@pytest.mark.skip
-def test_should_not_allow_to_leave_king_under_immediate_attack():
-    initial_state = {
-        Position(2, 2): Piece(PieceType.KING, Color.BLACK),
-        Position(3, 3): Piece(PieceType.PAWN, Color.BLACK),
-        Position(2, 4): Piece(PieceType.PAWN, Color.WHITE),
-        Position(4, 4): Piece(PieceType.BISHOP, Color.WHITE),
-    }
-    board = Board.from_mapping(initial_state)
-
-    with pytest.raises(MoveInterpretError):
-        make_move(board, Position(3, 3), Position(2, 4))
-    assert board.to_mapping() == initial_state
-
-
 def test_should_detect_if_king_is_in_check():
     initial_state = {
         Position(2, 2): Piece(PieceType.KING, Color.BLACK),
@@ -666,3 +639,81 @@ def test_should_answer_if_king_is_under_immediate_attack():
     """)
     assert is_king_under_attack(board, Color.BLACK)
     assert not is_king_under_attack(board, Color.WHITE)
+
+
+class TestGame:
+    def test_should_keep_state_of_the_game(self):
+        initial_state = {
+            Position(2, 5): Piece(PieceType.KING, Color.WHITE),
+            Position(1, 2): Piece(PieceType.KING, Color.BLACK),
+        }
+
+        game = Game(Board.from_mapping(initial_state), Color.BLACK)
+
+        assert game.board.to_mapping() == initial_state
+        assert game.moving_color == Color.BLACK
+        assert game.enemy_color == Color.WHITE
+        assert game.enemy_king_state == KingState.SAFE
+
+    def test_should_be_created_with_fresh_initial_state(self):
+        game = Game.fresh()
+
+        assert game.board == Board.initialy_filled()
+        assert game.moving_color == Color.WHITE
+        assert game.enemy_color == Color.BLACK
+        assert game.enemy_king_state == KingState.SAFE
+
+    def test_should_deduce_king_state_on_initialization(self):
+        board = Board.from_mapping({
+            Position(2, 2): Piece(PieceType.KING, Color.BLACK),
+            Position(3, 3): Piece(PieceType.PAWN, Color.BLACK),
+            Position(2, 4): Piece(PieceType.QUEEN, Color.WHITE),
+            Position(4, 7): Piece(PieceType.KING, Color.WHITE),
+        })
+
+        game = Game(board, Color.WHITE)
+
+        assert game.enemy_king_state == KingState.CHECK
+
+    def test_should_make_move_with_given_coordinates(self):
+        initial_board = Board.from_mapping({
+            Position(2, 5): Piece(PieceType.KING, Color.WHITE),
+            Position(1, 2): Piece(PieceType.KING, Color.BLACK),
+        })
+        game = Game(initial_board, Color.BLACK)
+
+        result = game.make_move(Position(1, 2), Position(1, 1), None)
+
+        assert isinstance(result, Move)
+        assert game.board.to_mapping() == {
+            Position(2, 5): Piece(PieceType.KING, Color.WHITE),
+            Position(1, 1): Piece(PieceType.KING, Color.BLACK),
+        }
+        assert game.moving_color == Color.WHITE
+        assert game.enemy_color == Color.BLACK
+        assert game.enemy_king_state == KingState.SAFE
+
+    def test_should_not_allow_to_place_king_under_immediate_attack(self):
+        initial_state = {
+            Position(5, 4): Piece(PieceType.KING, Color.WHITE),
+            Position(3, 5): Piece(PieceType.KING, Color.BLACK),
+        }
+        game = Game(Board.from_mapping(initial_state), Color.WHITE)
+
+        result = game.make_move(Position(5, 4), Position(4, 4), None)
+
+        assert result == "move leaves king under immediate attack"
+        assert game.board.to_mapping() == initial_state
+
+    def test_should_not_allow_to_leave_king_under_immediate_attack(self):
+        initial_state = {
+            Position(2, 2): Piece(PieceType.KING, Color.BLACK),
+            Position(3, 3): Piece(PieceType.PAWN, Color.BLACK),
+            Position(2, 4): Piece(PieceType.PAWN, Color.WHITE),
+            Position(4, 4): Piece(PieceType.BISHOP, Color.WHITE),
+        }
+        game = Game(Board.from_mapping(initial_state), Color.BLACK)
+
+        result = game.make_move(Position(3, 3), Position(2, 4), None)
+        assert result == "move leaves king under immediate attack"
+        assert game.board.to_mapping() == initial_state

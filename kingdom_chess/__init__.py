@@ -91,7 +91,7 @@ class Color(enum.Enum):
     BLACK = "black"
 
     @property
-    def reversed(self) -> Color:
+    def opposite(self) -> Color:
         return Color.BLACK if self is Color.WHITE else Color.WHITE
 
 
@@ -276,12 +276,11 @@ piece_to_unicode: Final[Mapping[Piece | None, str]] = {
 
 def play() -> None:
     """Provisional, untested game loop."""
-    board = Board.initialy_filled()
-    moving_color, enemy_color = Color.WHITE, Color.BLACK
-    print(board.to_unicode_with_coordinates())
+    game = Game.fresh()
+    print(game.board.to_unicode_with_coordinates())
     while True:
         try:
-            player_input = input(f"[{moving_color.value}] ")
+            player_input = input(f"[{game.moving_color.value}] ")
         except EOFError:
             print()
             break
@@ -299,31 +298,76 @@ def play() -> None:
             print("invalid coordinates")
             continue
 
-        move = interpret_move(board, moving_color, departure, destination, promotion_to)
+        move = game.make_move(departure, destination, promotion_to)
 
-        if isinstance(move, MoveInterpretError):
+        if isinstance(move, MoveError):
             print(move)
             continue
 
-        do_move(move, board)
-
-        if is_king_under_attack(board, moving_color):
-            undo_move(move, board)
-            print("move leaves king under immediate attack")
-            continue
-
-        king_state = deduce_king_state(board, enemy_color)
-        if king_state is KingState.CHECK:
+        if game.enemy_king_state is KingState.CHECK:
             print("check")
-        if king_state is KingState.CHECKMATE:
-            print(f"CHECKMATE: {moving_color.value} won!")
-            print(board.to_unicode_with_coordinates(rotated=moving_color is Color.BLACK))
+        if game.enemy_king_state is KingState.CHECKMATE:
+            print(f"CHECKMATE: {game.moving_color.value} won!")
+            print(game.board.to_unicode_with_coordinates(rotated=game.moving_color is Color.BLACK))
             break
 
-        moving_color, enemy_color = enemy_color, moving_color
-
         print()
-        print(board.to_unicode_with_coordinates(rotated=moving_color is Color.BLACK))
+        print(game.board.to_unicode_with_coordinates(rotated=game.moving_color is Color.BLACK))
+
+
+# Game
+# ====
+
+
+class Game:
+    """Manages the game state."""
+
+    def __init__(self, board: Board, moving_color: Color) -> None:
+        self._board = board
+        self._moving_color = moving_color
+        self._enemy_color = moving_color.opposite
+        self._enemy_king_state = deduce_king_state(board, self._enemy_color)
+
+    @classmethod
+    def fresh(cls) -> Game:
+        return Game(Board.initialy_filled(), Color.WHITE)
+
+    @property
+    def board(self) -> BoardModel:
+        return self._board
+
+    @property
+    def moving_color(self) -> Color:
+        """Player that is moving next."""
+        return self._moving_color
+
+    @property
+    def enemy_color(self) -> Color:
+        return self._enemy_color
+
+    @property
+    def enemy_king_state(self) -> KingState:
+        return self._enemy_king_state
+
+    def make_move(
+        self,
+        departure: Position,
+        destination: Position,
+        promotion_to: PromotionTarget | None
+    ) -> Move | MoveError:
+        move = interpret_move(self._board, self._moving_color, departure, destination, promotion_to)
+        if isinstance(move, MoveError):
+            return move
+
+        do_move(move, self._board)
+        if is_king_under_attack(self._board, self._moving_color):
+            undo_move(move, self._board)
+            return "move leaves king under immediate attack"
+
+        self._moving_color, self._enemy_color = self._enemy_color, self._moving_color
+        self._enemy_king_state = deduce_king_state(self._board, self._enemy_color)
+
+        return move
 
 
 # Move
@@ -362,7 +406,7 @@ def undo_move(move: Move, board: Board) -> None:
     board[move.departure] = move.moving_piece
 
 
-MoveInterpretError = str
+MoveError = str
 
 
 def interpret_move(
@@ -371,7 +415,7 @@ def interpret_move(
     departure: Position,
     destination: Position,
     promotion_to: PromotionTarget | None = None
-) -> Move | MoveInterpretError:
+) -> Move | MoveError:
     """Create `Move` or `MoveInterpretError` with message describing what is wrong with the move."""
 
     if departure == destination:
@@ -496,7 +540,7 @@ def is_king_under_attack(board: BoardModel, color: Color) -> bool:
     """
     for pos, piece in board.to_mapping().items():
         if piece.typ is PieceType.KING and piece.color is color:
-            return not is_position_safe(board, pos, color.reversed)
+            return not is_position_safe(board, pos, color.opposite)
     return False
 
 
