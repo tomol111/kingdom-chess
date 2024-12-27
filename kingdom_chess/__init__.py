@@ -29,14 +29,14 @@ class Position:
             raise ValueError(self.x, self.y)
 
     @classmethod
-    def from_coordinates(cls, coords: str) -> Position:
+    def from_coordinate(cls, coord: str) -> Position:
         """Create `Position` from "{file}{rank}" labels."""
-        if len(coords) != 2:
-            raise ValueError(coords)
-        file = FILES.find(coords[0])
-        rank = RANKS.find(coords[1])
+        if len(coord) != 2:
+            raise ValueError(coord)
+        file = FILES.find(coord[0])
+        rank = RANKS.find(coord[1])
         if file == -1 or rank == -1:
-            raise ValueError(coords)
+            raise ValueError(coord)
         return Position(file, rank)
 
     def direction_to(self, destination: Position) -> tuple[int, int]:
@@ -286,8 +286,8 @@ def play() -> None:
             print()
             break
         try:
-            departure = Position.from_coordinates(player_input[:2])
-            destination = Position.from_coordinates(player_input[2:4])
+            departure = Position.from_coordinate(player_input[:2])
+            destination = Position.from_coordinate(player_input[2:4])
             promotion_to: PromotionTarget | None
             match player_input[4:].lower():
                 case "/q": promotion_to = PieceType.QUEEN
@@ -307,7 +307,7 @@ def play() -> None:
 
         do_move(move, board)
 
-        if is_king_under_attack(board, move.moving_piece.color):
+        if is_king_under_attack(board, moving_color):
             undo_move(move, board)
             print("move leaves king under immediate attack")
             continue

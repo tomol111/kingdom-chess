@@ -25,18 +25,18 @@ def test_position_should_not_be_outside_board(file, rank):
         _ = Position(file, rank)
 
 
-@pytest.mark.parametrize(("coordinates", "file", "rank"), [
+@pytest.mark.parametrize(("coordinate", "file", "rank"), [
     ("a8", 0, 0), ("c2", 2, 6), ("h1", 7, 7)
 ])
-def test_position_should_be_creatable_from_coordinates(coordinates, file, rank):
-    assert Position.from_coordinates(coordinates) == Position(file, rank)
+def test_position_should_be_creatable_from_coordinate(coordinate, file, rank):
+    assert Position.from_coordinate(coordinate) == Position(file, rank)
 
 
-@pytest.mark.parametrize("coords", ["a83", "b", "i3", "b0"])
-def test_position_should_not_be_created_from_invalid_coordinates(coords):
+@pytest.mark.parametrize("coord", ["a83", "b", "i3", "b0"])
+def test_position_should_not_be_created_from_invalid_coordinates(coord):
     with pytest.raises(ValueError) as exc_info:
-        _ = Position.from_coordinates(coords)
-    assert coords in exc_info.value.args
+        _ = Position.from_coordinate(coord)
+    assert coord in exc_info.value.args
 
 
 def test_board_should_place_a_piece():
