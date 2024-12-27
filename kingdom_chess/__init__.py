@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import abc
 import enum
 import dataclasses
 from typing import Final, Literal
@@ -136,7 +137,24 @@ STARTING_BOARD_STATE: Final[Mapping[Position, Piece]] = {
 }
 
 
-class Board:
+class BoardModel(metaclass=abc.ABCMeta):
+    @abc.abstractmethod
+    def __getitem__(self, pos: Position) -> Piece | None: ...
+
+    @abc.abstractmethod
+    def to_mapping(self) -> dict[Position, Piece]: ...
+
+    @abc.abstractmethod
+    def to_unicode(self) -> str: ...
+
+    @abc.abstractmethod
+    def to_unicode_with_coordinates(self, rotated: bool = False) -> str: ...
+
+    @abc.abstractmethod
+    def __eq__(self, other: object) -> bool: ...
+
+
+class Board(BoardModel):
     """
     Chessboard
 
@@ -348,7 +366,7 @@ MoveInterpretError = str
 
 
 def interpret_move(
-    board: Board,
+    board: BoardModel,
     moving_color: Color,
     departure: Position,
     destination: Position,
@@ -457,7 +475,7 @@ def deduce_king_state(board: Board, next_moving_color: Color) -> KingState:
     return KingState.CHECKMATE
 
 
-def is_position_safe(board: Board, position: Position, enemy_color: Color) -> bool:
+def is_position_safe(board: BoardModel, position: Position, enemy_color: Color) -> bool:
     """Check if given position is free of immediate attack.
 
     Given position can be occupied or not.
@@ -471,7 +489,7 @@ def is_position_safe(board: Board, position: Position, enemy_color: Color) -> bo
     )
 
 
-def is_king_under_attack(board: Board, color: Color) -> bool:
+def is_king_under_attack(board: BoardModel, color: Color) -> bool:
     """Search if king of given color is under immediate attack.
 
     If king has not been found return `False`.
@@ -482,7 +500,7 @@ def is_king_under_attack(board: Board, color: Color) -> bool:
     return False
 
 
-def is_path_clear(board: Board, departure: Position, destination: Position) -> bool:
+def is_path_clear(board: BoardModel, departure: Position, destination: Position) -> bool:
     """Checks if path between positions have intervening peace(s)."""
     dx, dy = departure.direction_to(destination)
     intermediate = departure.shift(dx, dy)
