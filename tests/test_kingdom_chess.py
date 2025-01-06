@@ -12,7 +12,6 @@ from kingdom_chess import (
     do_move,
     interpret_move,
     is_king_under_attack,
-    MoveError,
     Piece,
     PieceType,
     Position,
@@ -717,3 +716,124 @@ class TestGame:
         result = game.make_move(Position(3, 3), Position(2, 4), None)
         assert result == "move leaves king under immediate attack"
         assert game.board.to_mapping() == initial_state
+
+
+class TestGame_parse_move_notation:
+    def test_should_parse_simple_algebraic_notation(self):
+        board = Board.from_mapping({
+            Position(2, 3): Piece(PieceType.KING, Color.BLACK),
+            Position(3, 3): Piece(PieceType.PAWN, Color.BLACK),
+            Position(4, 5): Piece(PieceType.KING, Color.WHITE),
+        })
+        game = Game(board, Color.BLACK)
+
+        move = game.parse_move_notation("kb4")
+
+        assert move == Move(
+            departure=Position(2, 3),
+            destination=Position(1, 4),
+            moving_piece=Piece(PieceType.KING, Color.BLACK),
+        )
+
+    def test_should_error_parsing_invalid_notation(self):
+        game = Game(Board(), Color.BLACK)
+
+        err = game.parse_move_notation("xxx")
+
+        assert err == "invalid move notation"
+
+    def test_should_parse_algebraic_notation_for_pawn_move(self):
+        board = Board.from_mapping({
+            Position(2, 3): Piece(PieceType.KING, Color.BLACK),
+            Position(3, 3): Piece(PieceType.PAWN, Color.BLACK),
+            Position(4, 5): Piece(PieceType.KING, Color.WHITE),
+        })
+        game = Game(board, Color.BLACK)
+
+        move = game.parse_move_notation("d4")
+
+        assert move == Move(
+            departure=Position(3, 3),
+            destination=Position(3, 4),
+            moving_piece=Piece(PieceType.PAWN, Color.BLACK),
+        )
+
+    def test_should_error_parsing_algebraic_notation_if_parsed_move_is_invalid(self):
+        board = Board.from_mapping({
+            Position(2, 3): Piece(PieceType.KING, Color.BLACK),
+            Position(3, 3): Piece(PieceType.PAWN, Color.BLACK),
+            Position(4, 5): Piece(PieceType.KING, Color.WHITE),
+        })
+        game = Game(board, Color.BLACK)
+
+        err = game.parse_move_notation("Ke4")
+
+        assert err == "invalid move"
+
+    def test_should_error_parsing_algebraic_notation_if_it_is_ambiguous(self):
+        board = Board.from_mapping({
+            Position(3, 0): Piece(PieceType.ROOK, Color.BLACK),
+            Position(7, 0): Piece(PieceType.ROOK, Color.BLACK),
+        })
+        game = Game(board, Color.BLACK)
+
+        err = game.parse_move_notation("Rf8")
+
+        assert err == "ambiguous move notation"
+
+    def test_should_parse_algebraic_notation_with_file_disambiguation(self):
+        board = Board.from_mapping({
+            Position(3, 0): Piece(PieceType.ROOK, Color.BLACK),
+            Position(7, 0): Piece(PieceType.ROOK, Color.BLACK),
+        })
+        game = Game(board, Color.BLACK)
+
+        move = game.parse_move_notation("Rdf8")
+
+        assert move == Move(
+            departure=Position(3, 0),
+            destination=Position(5, 0),
+            moving_piece=Piece(PieceType.ROOK, Color.BLACK),
+        )
+
+    def test_should_parse_algebraic_notation_with_rank_disambiguation(self):
+        board = Board.from_mapping({
+            Position(0, 3): Piece(PieceType.ROOK, Color.WHITE),
+            Position(0, 7): Piece(PieceType.ROOK, Color.WHITE),
+        })
+        game = Game(board, Color.WHITE)
+
+        move = game.parse_move_notation("R1a3")
+
+        assert move == Move(
+            departure=Position(0, 7),
+            destination=Position(0, 5),
+            moving_piece=Piece(PieceType.ROOK, Color.WHITE),
+        )
+
+    def test_should_parse_algebraic_notation_with_full_disambiguation(self):
+        board = Board.from_mapping({
+            Position(4, 4): Piece(PieceType.QUEEN, Color.WHITE),
+            Position(7, 4): Piece(PieceType.QUEEN, Color.WHITE),
+            Position(7, 7): Piece(PieceType.QUEEN, Color.WHITE),
+        })
+        game = Game(board, Color.WHITE)
+
+        move = game.parse_move_notation("Qh4e1")
+
+        assert move == Move(
+            departure=Position(7, 4),
+            destination=Position(4, 7),
+            moving_piece=Piece(PieceType.QUEEN, Color.WHITE),
+        )
+
+    @pytest.mark.skip
+    def test_should_error_parsing_algebraic_notation_with_missing_promotion_target(self):
+        board = Board.from_mapping({
+            Position(6, 1): Piece(PieceType.PAWN, Color.WHITE),
+        })
+        game = Game(board, Color.WHITE)
+
+        err = game.parse_move_notation("g8")
+
+        assert err == "missing promotion target (e.g.: '/Q')"

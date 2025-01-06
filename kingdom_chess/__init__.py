@@ -3,7 +3,8 @@ from __future__ import annotations
 import abc
 import enum
 import dataclasses
-from typing import Final, Literal
+import re
+from typing import Final, Literal, cast
 from collections.abc import Mapping
 
 
@@ -81,6 +82,18 @@ class PieceType(enum.Enum):
     BISHOP = enum.auto()
     KNIGHT = enum.auto()
     PAWN = enum.auto()
+
+    @classmethod
+    def from_char(cls, char: str) -> PieceType:
+        """Get `PieceType` by single char `str`."""
+        match char.lower():
+            case "k": return PieceType.KING
+            case "q": return PieceType.QUEEN
+            case "r": return PieceType.ROOK
+            case "b": return PieceType.BISHOP
+            case "n": return PieceType.KNIGHT
+            case "p": return PieceType.PAWN
+            case _: raise ValueError(char)
 
 
 PromotionTarget = Literal[PieceType.QUEEN, PieceType.ROOK, PieceType.BISHOP, PieceType.KNIGHT]
@@ -284,21 +297,18 @@ def play() -> None:
         except EOFError:
             print()
             break
-        try:
-            departure = Position.from_coordinate(player_input[:2])
-            destination = Position.from_coordinate(player_input[2:4])
-            promotion_to: PromotionTarget | None
-            match player_input[4:].lower():
-                case "/q": promotion_to = PieceType.QUEEN
-                case "/r": promotion_to = PieceType.ROOK
-                case "/b": promotion_to = PieceType.BISHOP
-                case "/n": promotion_to = PieceType.KNIGHT
-                case _: promotion_to = None
-        except ValueError:
-            print("invalid coordinates")
+
+        move_to_do = game.parse_move_notation(player_input)
+
+        if isinstance(move_to_do, MoveError):
+            print(move_to_do)
             continue
 
-        move = game.make_move(departure, destination, promotion_to)
+        promotion_to = (
+            cast(PromotionTarget, move_to_do.promotion_to.typ) if move_to_do.promotion_to else None
+        )
+
+        move = game.make_move(move_to_do.departure, move_to_do.destination, promotion_to)
 
         if isinstance(move, MoveError):
             print(move)
@@ -368,6 +378,60 @@ class Game:
         self._enemy_king_state = deduce_king_state(self._board, self._enemy_color)
 
         return move
+
+    def parse_move_notation(self, notation: str) -> Move | MoveError:
+        match = re.fullmatch(
+            """
+                (?P<piece>[kqrbnp]?)
+                (?P<departure_file>[a-h]?)
+                (?P<departure_rank>[1-8]?)
+                (?P<destination>[a-h][1-8])
+                (/(?P<promotion_to>[qrbn]))?
+            """,
+            notation.lower(),
+            re.VERBOSE,
+        )
+
+        if not match:
+            return "invalid move notation"
+
+        piece_type = PieceType.from_char(match["piece"]) if match["piece"] else PieceType.PAWN
+        moving_piece = Piece(piece_type, self.moving_color)
+
+        departure_x = FILES.find(match["departure_file"]) if match["departure_file"] else None
+        departure_y = RANKS.find(match["departure_rank"]) if match["departure_rank"] else None
+        destination = Position.from_coordinate(match["destination"])
+        promotion_to = (
+            cast(PromotionTarget, PieceType.from_char(match["promotion_to"]))
+            if match["promotion_to"]
+            else None
+        )
+
+        potential_moving_pieces_positions = [
+            position
+            for position, piece in self.board.to_mapping().items()
+            if piece == moving_piece
+                and (departure_x is None or position.x == departure_x)
+                and (departure_y is None or position.y == departure_y)
+        ]
+        all_potential_moves = [
+            potential_move
+            for position in potential_moving_pieces_positions
+            if isinstance(
+                potential_move := interpret_move(
+                    self.board, self.moving_color, position, destination, promotion_to
+                ),
+                Move,
+            )
+        ]
+
+        match all_potential_moves:
+            case [move]:
+                return move
+            case []:
+                return "invalid move"
+            case _:
+                return "ambiguous move notation"
 
 
 # Move
